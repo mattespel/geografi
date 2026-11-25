@@ -103,6 +103,31 @@ var PLATSER = [
   { stad: 'Djibouti',           land: 'Djibouti',             världsdel: 'Afrika', lat: 11.59, lon:  43.15, svårighet: 0.80 },
   { stad: 'Conakry',            land: 'Guinea',               världsdel: 'Afrika', lat:  9.64, lon: -13.58, svårighet: 0.70 },
   { stad: 'Freetown',           land: 'Sierra Leone',         världsdel: 'Afrika', lat:  8.48, lon: -13.23, svårighet: 0.65 },
-  { stad: 'Gitega',             land: 'Burundi',              världsdel: 'Afrika', lat: -3.43, lon:  29.93, svårighet: 0.90 }
+  { stad: 'Gitega',             land: 'Burundi',              världsdel: 'Afrika', lat: -3.43, lon:  29.93, svårighet: 0.90 },
+
+  // Nordamerika
+  { stad: 'Washington D.C.',    land: 'USA',                    världsdel: 'Nordamerika', lat: 38.91, lon: -77.04, svårighet: 0.05 },
+  { stad: 'Ottawa',             land: 'Kanada',                 världsdel: 'Nordamerika', lat: 45.42, lon: -75.70, svårighet: 0.15 },
+  { stad: 'Mexico City',        land: 'Mexiko',                 världsdel: 'Nordamerika', lat: 19.43, lon: -99.13, svårighet: 0.10 },
+  { stad: 'Havanna',            land: 'Kuba',                   världsdel: 'Nordamerika', lat: 23.11, lon: -82.37, svårighet: 0.20 },
+  { stad: 'Guatemala City',     land: 'Guatemala',              världsdel: 'Nordamerika', lat: 14.63, lon: -90.51, svårighet: 0.35 },
+  { stad: 'Panama City',        land: 'Panama',                 världsdel: 'Nordamerika', lat:  8.98, lon: -79.52, svårighet: 0.30 },
+  { stad: 'San José',           land: 'Costa Rica',             världsdel: 'Nordamerika', lat:  9.93, lon: -84.08, svårighet: 0.35 },
+  { stad: 'Managua',            land: 'Nicaragua',              världsdel: 'Nordamerika', lat: 12.11, lon: -86.24, svårighet: 0.50 },
+  { stad: 'Tegucigalpa',        land: 'Honduras',               världsdel: 'Nordamerika', lat: 14.07, lon: -87.19, svårighet: 0.65 },
+  { stad: 'San Salvador',       land: 'El Salvador',            världsdel: 'Nordamerika', lat: 13.69, lon: -89.19, svårighet: 0.40 },
+  { stad: 'Belmopan',           land: 'Belize',                 världsdel: 'Nordamerika', lat: 17.25, lon: -88.77, svårighet: 0.85 },
+  { stad: 'San Juan',           land: 'Puerto Rico',             världsdel: 'Nordamerika', lat: 18.47, lon: -66.11, svårighet: 0.40 },
+  { stad: 'Santo Domingo',      land: 'Dominikanska republiken',världsdel: 'Nordamerika', lat: 18.49, lon: -69.90, svårighet: 0.35 },
+  { stad: 'Port-au-Prince',     land: 'Haiti',                  världsdel: 'Nordamerika', lat: 18.54, lon: -72.34, svårighet: 0.55 },
+  { stad: 'Kingston',           land: 'Jamaica',                världsdel: 'Nordamerika', lat: 17.97, lon: -76.79, svårighet: 0.40 },
+  { stad: 'Nassau',             land: 'Bahamas',                världsdel: 'Nordamerika', lat: 25.05, lon: -77.35, svårighet: 0.60 },
+  { stad: 'Bridgetown',         land: 'Barbados',               världsdel: 'Nordamerika', lat: 13.10, lon: -59.62, svårighet: 0.75 },
+  { stad: 'Castries',           land: 'Saint Lucia',            världsdel: 'Nordamerika', lat: 14.01, lon: -60.99, svårighet: 0.85 },
+  { stad: 'Roseau',             land: 'Dominica',               världsdel: 'Nordamerika', lat: 15.30, lon: -61.39, svårighet: 0.90 },
+  { stad: 'St. George''s',      land: 'Grenada',                världsdel: 'Nordamerika', lat: 12.06, lon: -61.75, svårighet: 0.90 },
+  { stad: 'Kingstown',          land: 'Saint Vincent och Grenadinerna', världsdel: 'Nordamerika', lat: 13.16, lon: -61.23, svårighet: 0.90 },
+  { stad: 'Saint John''s',      land: 'Antigua och Barbuda',    världsdel: 'Nordamerika', lat: 17.12, lon: -61.84, svårighet: 0.90 },
+  { stad: 'Basseterre',         land: 'Saint Kitts och Nevis',  världsdel: 'Nordamerika', lat: 17.30, lon: -62.73, svårighet: 0.95 }
   
 ];
