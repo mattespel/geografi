@@ -125,9 +125,9 @@ var PLATSER = [
   { stad: 'Bridgetown',         land: 'Barbados',               världsdel: 'Nordamerika', lat: 13.10, lon: -59.62, svårighet: 0.75 },
   { stad: 'Castries',           land: 'Saint Lucia',            världsdel: 'Nordamerika', lat: 14.01, lon: -60.99, svårighet: 0.85 },
   { stad: 'Roseau',             land: 'Dominica',               världsdel: 'Nordamerika', lat: 15.30, lon: -61.39, svårighet: 0.90 },
-  { stad: 'St. George''s',      land: 'Grenada',                världsdel: 'Nordamerika', lat: 12.06, lon: -61.75, svårighet: 0.90 },
+  { stad: "St. George's",      land: 'Grenada',                världsdel: 'Nordamerika', lat: 12.06, lon: -61.75, svårighet: 0.90 },
   { stad: 'Kingstown',          land: 'Saint Vincent och Grenadinerna', världsdel: 'Nordamerika', lat: 13.16, lon: -61.23, svårighet: 0.90 },
-  { stad: 'Saint John''s',      land: 'Antigua och Barbuda',    världsdel: 'Nordamerika', lat: 17.12, lon: -61.84, svårighet: 0.90 },
+  { stad: "Saint John's",      land: 'Antigua och Barbuda',    världsdel: 'Nordamerika', lat: 17.12, lon: -61.84, svårighet: 0.90 },
   { stad: 'Basseterre',         land: 'Saint Kitts och Nevis',  världsdel: 'Nordamerika', lat: 17.30, lon: -62.73, svårighet: 0.95 }
   
 ];
