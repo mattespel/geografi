@@ -175,9 +175,18 @@ function createGlobe(host, onPlace){
   var unitSphere = new THREE.SphereGeometry(1,16,12), ray = new THREE.Raycaster();
 
   G.resetView = function(){
-    globe.rotation.set((Math.random()*2-1)*0.8, Math.random()*Math.PI*2, 0);
-    G.camZ = DEFZ; cam.position.z = DEFZ; G.target = null;
-  };
+
+  // Center roughly on Europe
+  var europe = { lat: 50, lon: 15 };
+
+  globe.rotation.x = europe.lat * R;
+  globe.rotation.y = -Math.PI/2 - europe.lon * R;
+  globe.rotation.z = 0;
+
+  G.camZ = DEFZ;
+  cam.position.z = DEFZ;
+  G.target = null;
+};
   G.resetView();
 
   function frame(){
