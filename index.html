@@ -39,7 +39,7 @@ th{color:var(--dim);font-weight:500}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .ok{color:#4cc790}.no{color:#e8806b}
 .actions{display:flex;gap:12px;flex-wrap:wrap}
- 
+
 /* menu */
 #modes{display:flex;flex-direction:column;gap:10px}
 button.opt{display:flex;justify-content:space-between;align-items:center;gap:16px;width:100%;text-align:left;
@@ -55,7 +55,7 @@ button.opt .num{font-variant-numeric:tabular-nums;white-space:nowrap;font-size:.
 </head>
 <body>
 <div id="geo"></div>
- 
+
 <div class="top">
   <div><h1 class="city" id="city">Laddar…</h1><div class="sub" id="hint"></div></div>
   <div class="count"><div id="count"></div><div id="timer">0:00</div></div>
@@ -64,13 +64,13 @@ button.opt .num{font-variant-numeric:tabular-nums;white-space:nowrap;font-size:.
   <div id="msg">Dra för att snurra, nyp eller scrolla för att zooma, tryck för att sätta din nål.</div>
   <button id="btn" disabled title="Mellanslag eller Enter">Kontrollera svar</button>
 </div>
- 
+
 <div id="menu"><div class="card">
   <h2>Jordglobsquiz</h2>
   <p class="lead">Välj vad du vill öva på.</p>
   <div id="modes"></div>
 </div></div>
- 
+
 <div id="end"><div class="card">
   <h2 id="rTitle">Resultat</h2>
   <div class="stats">
@@ -85,7 +85,7 @@ button.opt .num{font-variant-numeric:tabular-nums;white-space:nowrap;font-size:.
     <button id="toMenu" class="ghost">Till menyn</button>
   </div>
 </div></div>
- 
+
 <script src="platser.js"></script>
 <script>
 /* ==========================================================================
@@ -97,7 +97,7 @@ button.opt .num{font-variant-numeric:tabular-nums;white-space:nowrap;font-size:.
    ========================================================================== */
 (function(){
 'use strict';
- 
+
 /* ---------- 1. SETTINGS ---------- */
 var R = Math.PI / 180;
 var MINZ = 1.15, MAXZ = 8, DEFZ = 4.3, REVEALZ = 1.4, MAXTILT = 1.55, MAXDPR = 3, MARKER = 0.8;
@@ -105,21 +105,21 @@ var NIGHT = 0.5, SUN_LON = null, SUNDIST = 12, SUNSIZE = 2.5, SUNFADE = 0.5;
 var FIT = 0.7, TANH = Math.tan(17.5 * R);
 var TEXTURE_SRC = 'earth.avif', THREE_SRC = 'three.min.js';
 var COL_GUESS = 0xd1432b, COL_TRUTH = 0x1c8a5a, COL_ARC = 0xffd24a;
- 
+
 // Scoring
 var CORRECT_KM = 100;        // within this distance counts as correct
 var ZERO_KM   = 4000;        // distance at which a round's accuracy reaches 0%
 // Per-round accuracy = 100% at 0 km, falling linearly to 0% at ZERO_KM.
- 
+
 // Menu / game length
 var QUICK_ROUNDS = 10;       // cities in "Snabbspel"
 var CATEGORY_ROUNDS = 10;    // cities per round in a continent game. Set to 0 to play ALL cities of the continent.
 var CONTINENT_FIELD = 'världsdel';
 var CONTINENT_ORDER = ['Europa', 'Afrika', 'Asien', 'Nordamerika', 'Sydamerika', 'Oceanien']; // menu order
- 
+
 /* ---------- 2. QUESTIONS: edit platser.js, not this file ---------- */
 var CITIES = window.PLATSER || [];
- 
+
 /* ---------- 3. HELPERS ---------- */
 function $(id){ return document.getElementById(id); }
 function clamp(x, lo, hi){ return Math.max(lo, Math.min(hi, x)); }
@@ -166,20 +166,20 @@ function shuffle(a){
 function accuracy(km){ return clamp(100*(1 - km/ZERO_KM), 0, 100); }
 function fmt(n){ return Math.round(n).toLocaleString('sv'); }
 function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
- 
+
 /* ---------- 4. GLOBE ENGINE ---------- */
 function createGlobe(host, onPlace){
   var G = { keep:0, raf:0, target:null, camZ:DEFZ, pts:{}, down:null, pinch:null, moved:false,
             guess:null, ans:null, locked:false };
   var _sunPos = new THREE.Vector3(), _sunView = new THREE.Vector3();
- 
+
   var ren = new THREE.WebGLRenderer({ antialias:true, alpha:true });
   ren.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAXDPR));
   var cv = ren.domElement; cv.style.opacity = 0; host.appendChild(cv);
- 
+
   var sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(35, 1, 0.05, 50);
   cam.position.z = DEFZ;
- 
+
   var sunLocal = vec(subsolar().lat, subsolar().lon);
   var sunU = { value: sunLocal.clone() }, nightU = { value: NIGHT };
   var mat = new THREE.MeshBasicMaterial({ color: 0xffffff });
@@ -197,28 +197,28 @@ function createGlobe(host, onPlace){
   sc.add(globe);
   sc.add(new THREE.Mesh(new THREE.SphereGeometry(1.05,48,32),
     new THREE.MeshBasicMaterial({ color:0x6fa8c8, transparent:true, opacity:.14, side:THREE.BackSide })));
- 
+
   var mk = new THREE.Group(); globe.add(mk);
   var sun = new THREE.Sprite(new THREE.SpriteMaterial({ map:glowTex(), blending:THREE.AdditiveBlending, transparent:true, depthWrite:false }));
   sun.scale.set(SUNSIZE, SUNSIZE, 1); sc.add(sun);
- 
+
   var unitSphere = new THREE.SphereGeometry(1,16,12), ray = new THREE.Raycaster();
- 
+
   G.resetView = function(){
- 
+
   // Center roughly on Europe
   var europe = { lat: 50, lon: 15 };
- 
+
   globe.rotation.x = europe.lat * R;
   globe.rotation.y = -Math.PI/2 - europe.lon * R;
   globe.rotation.z = 0;
- 
+
   G.camZ = DEFZ;
   cam.position.z = DEFZ;
   G.target = null;
 };
   G.resetView();
- 
+
   function frame(){
     G.raf = 0;
     var busy = G.keep > 0; if(busy) G.keep--;
@@ -231,10 +231,10 @@ function createGlobe(host, onPlace){
     }
     var dz = G.camZ - cam.position.z;
     if(Math.abs(dz) > .0005){ cam.position.z += dz*.15; busy = true; }
- 
+
     var s = clamp((cam.position.z-1)/3.2, .08, 1)*MARKER, c = mk.children;
     for(var n=0; n<c.length; n++) if(c[n].isMesh) c[n].scale.setScalar(c[n].userData.size*s);
- 
+
     _sunPos.copy(sunLocal).applyQuaternion(globe.quaternion).multiplyScalar(SUNDIST);
     sun.position.copy(_sunPos); cam.updateMatrixWorld();
     _sunView.copy(_sunPos).applyMatrix4(cam.matrixWorldInverse);
@@ -245,12 +245,12 @@ function createGlobe(host, onPlace){
       fade = fade*fade*(3-2*fade);
     }
     sun.material.opacity = fade; sun.visible = fade > 0;
- 
+
     ren.render(sc, cam);
     if(busy) G.raf = requestAnimationFrame(frame);
   }
   function kick(){ G.keep = 2; if(!G.raf) G.raf = requestAnimationFrame(frame); }
- 
+
   function loadTex(){
     new THREE.TextureLoader().load(TEXTURE_SRC, function(t){
       t.generateMipmaps = false; t.minFilter = THREE.LinearFilter;
@@ -266,7 +266,7 @@ function createGlobe(host, onPlace){
     });
   }
   loadTex();
- 
+
   function dot(lat, lon, col, size, opacity){
     var m = new THREE.Mesh(unitSphere, new THREE.MeshBasicMaterial({ color:col, transparent:opacity<1, opacity:opacity }));
     m.userData.size = size; m.scale.setScalar(size); m.position.copy(vec(lat, lon, 1)); mk.add(m);
@@ -291,7 +291,7 @@ function createGlobe(host, onPlace){
     if(G.guess) dot(G.guess.lat, G.guess.lon, COL_GUESS, .024, 1);
     kick();
   }
- 
+
   // Show the answer and frame both pins
   G.reveal = function(ans){
     G.ans = ans; G.locked = true; marks();
@@ -305,10 +305,10 @@ function createGlobe(host, onPlace){
     G.target = rotationFor(centre.length() > .05 ? latlon(centre) : ans);
     G.camZ = Math.max(z, REVEALZ); kick();
   };
- 
+
   // Clear pins for the next question
   G.next = function(){ G.ans = null; G.guess = null; G.locked = false; G.resetView(); marks(); };
- 
+
   function pinchDist(){ var k = Object.keys(G.pts), a = G.pts[k[0]], b = G.pts[k[1]]; return Math.hypot(a.x-b.x, a.y-b.y); }
   function place(e){
     var r = cv.getBoundingClientRect();
@@ -344,7 +344,7 @@ function createGlobe(host, onPlace){
   cv.addEventListener('wheel', function(e){
     e.preventDefault(); G.camZ = clampZ(1 + (G.camZ-1)*(1 + e.deltaY*.001)); kick();
   }, { passive:false });
- 
+
   function size(){
     var w = host.clientWidth, h = host.clientHeight;
     if(w && h){ ren.setSize(w, h, false); cam.aspect = w/h; cam.updateProjectionMatrix(); kick(); }
@@ -352,16 +352,16 @@ function createGlobe(host, onPlace){
   window.addEventListener('resize', size); size();
   return G;
 }
- 
+
 /* ---------- 5. MENU & GAME ---------- */
 var G, order, idx, results, t0, timerId, currentMode;
- 
+
 function clock(ms){ var s = Math.floor(ms/1000); return Math.floor(s/60) + ':' + ('0' + (s%60)).slice(-2); }
 function tick(){ $('timer').textContent = clock(Date.now() - t0); }
- 
+
 /* --- Menu: the list of game modes is built from the data in platser.js --- */
 function genitive(w){ return /s$/.test(w) ? w : w + 's'; }   // Europa -> Europas, Asien -> Asiens
- 
+
 function buildModes(){
   var modes = [{
     id: 'quick', quick: true, label: 'Snabbspel',
@@ -387,7 +387,7 @@ function buildModes(){
   });
   return modes;
 }
- 
+
 var MODES = [];
 function showMenu(){
   clearInterval(timerId);
@@ -397,7 +397,7 @@ function showMenu(){
   $('menu').classList.add('on');
   var first = $('modes').querySelector('button'); if(first) first.focus();
 }
- 
+
 function renderMenu(){
   MODES = buildModes();
   var html = '';
@@ -411,47 +411,47 @@ function renderMenu(){
   });
   $('modes').innerHTML = html;
 }
- 
+
 $('modes').addEventListener('click', function(e){
   var b = e.target.closest('button.opt'); if(!b) return;
   startGame(MODES[+b.getAttribute('data-i')]);
 });
- 
+
 /* --- Game --- */
 function show(i){
   var c = order[i];
-  $('city').textContent = c.namn; $('hint').textContent = c.tips;
+  $('city').textContent = c.stad; $('hint').textContent = c.land;
   $('count').textContent = (i+1) + ' / ' + order.length;
   $('msg').textContent = 'Tryck på jordgloben för att sätta din nål.';
   $('btn').textContent = 'Kontrollera svar'; $('btn').disabled = true;
 }
- 
+
 function startGame(mode){
   currentMode = mode;
   order = shuffle(mode.pool).slice(0, Math.min(mode.rounds, mode.pool.length));
   idx = 0;
   results = [];
- 
+
   t0 = Date.now();
   tick();
   clearInterval(timerId);
   timerId = setInterval(tick, 500);
- 
+
   $('menu').classList.remove('on');
   $('end').classList.remove('on');
   G.next();
   show(0);
 }
- 
+
 function check(){
   var c = order[idx], g = G.guess, d = hav(g.lat, g.lon, c.lat, c.lon), acc = accuracy(d), ok = d < CORRECT_KM;
-  results.push({ name:c.namn, km:d, acc:acc, ok:ok });
+  results.push({ name:c.stad, km:d, acc:acc, ok:ok });
   G.reveal(c);
   $('msg').innerHTML = '<b>' + fmt(d) + ' km ifrån</b><br>' + (ok ? 'Rätt!' : 'Inte inom ' + CORRECT_KM + ' km') +
     '<br><span class="g">●</span> din gissning &nbsp; <span class="t">●</span> rätt plats';
   $('btn').textContent = idx === order.length-1 ? 'Visa resultat' : 'Nästa plats';
 }
- 
+
 function finish(){
   clearInterval(timerId); tick();
   var right = results.filter(function(r){ return r.ok; }).length,
@@ -468,7 +468,7 @@ function finish(){
   }).join('');
   $('end').classList.add('on');
 }
- 
+
 $('btn').addEventListener('click', function(){
   if(!G.locked){ if(G.guess) check(); }
   else if(idx < order.length-1){ idx++; G.next(); show(idx); }
@@ -476,7 +476,7 @@ $('btn').addEventListener('click', function(){
 });
 $('again').addEventListener('click', function(){ startGame(currentMode); });
 $('toMenu').addEventListener('click', function(){ G.next(); showMenu(); });
- 
+
 // Space or Enter does the same as the main button (the end screen's button when it is open).
 // While the menu is open the keys are left alone, so Tab + Enter works on the menu buttons.
 document.addEventListener('keydown', function(e){
@@ -486,9 +486,9 @@ document.addEventListener('keydown', function(e){
   e.preventDefault();
   ($('end').classList.contains('on') ? $('again') : $('btn')).click();
 });
- 
+
 function fail(title, detail){ $('city').textContent = title; $('msg').textContent = detail; }
- 
+
 function boot(){
   if(!window.THREE) return fail('Three.js hittades inte', THREE_SRC + ' laddades men definierar inte THREE. Använd den klassiska versionen (t.ex. r128).');
   if(!CITIES.length) return fail('Fil saknas', 'Kunde inte läsa platser från platser.js. Kontrollera att filen ligger i samma mapp.');
@@ -503,7 +503,7 @@ function boot(){
     fail('Kunde inte starta', (e && e.message) ? e.message : String(e));
   }
 }
- 
+
 (function loadThree(){
   if(window.THREE) return boot();
   var s = document.createElement('script');
@@ -515,4 +515,3 @@ function boot(){
 </script>
 </body>
 </html>
- 
