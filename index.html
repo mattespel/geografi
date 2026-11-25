@@ -41,19 +41,20 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .actions{display:flex;gap:12px;flex-wrap:wrap}
 
 /* menu */
-#modes{display:flex;flex-direction:column;gap:10px}
+#menu .card{max-width:760px}
+#modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px}
 button.opt{display:block;width:100%;text-align:left;
-  background:var(--panel);color:var(--ink);border:1px solid var(--line);padding:14px 18px;font-weight:500}
+  background:var(--panel);color:var(--ink);border:1px solid var(--line);padding:10px 14px;font-weight:500}
 button.opt:hover{border-color:var(--gold)}
-button.opt.quick{background:var(--gold);color:#1a1400;border-color:var(--gold);margin-bottom:10px}
-button.opt .name{font-size:1.1rem;font-weight:700}
-button.opt .desc{display:block;font-size:.85rem;opacity:.75;font-weight:400;margin-top:2px}
+button.opt.quick{background:var(--gold);color:#1a1400;border-color:var(--gold);grid-column:1/-1}
+button.opt .name{font-size:1rem;font-weight:700}
+button.opt .desc{display:block;font-size:.8rem;opacity:.75;font-weight:400;margin-top:1px}
 button.opt .num{font-variant-numeric:tabular-nums;white-space:nowrap;font-size:.95rem;opacity:.85}
 .row{display:flex;justify-content:space-between;align-items:center;gap:16px}
-.mast{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:.85rem}
+.mast{display:flex;align-items:center;gap:10px;margin-top:7px;font-size:.8rem}
 .mast .bar{flex:1;height:5px;border-radius:3px;background:var(--line);overflow:hidden}
 .mast .bar i{display:block;height:100%;background:#4cc790}
-.mast span{min-width:9.5em;text-align:right;font-variant-numeric:tabular-nums;opacity:.85}
+.mast span{min-width:3.2em;text-align:right;font-variant-numeric:tabular-nums;opacity:.85}
 button.opt.quick .mast .bar{background:rgba(0,0,0,.2)}
 button.opt.quick .mast .bar i{background:#1a1400}
 .level{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin-bottom:18px}
@@ -63,7 +64,7 @@ button.opt.quick .mast .bar i{background:#1a1400}
 .level input{width:100%;margin:0;accent-color:var(--gold)}
 .level-ends{display:flex;justify-content:space-between;color:var(--dim);font-size:.85rem;margin-top:4px}
 button.opt:disabled{background:var(--panel);color:var(--dim);border-color:var(--line);opacity:.5}
-.divider{height:1px;background:var(--line);margin:8px 0 14px}
+.divider{height:1px;background:var(--line);grid-column:1/-1;margin:2px 0}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -81,7 +82,7 @@ button.opt:disabled{background:var(--panel);color:var(--dim);border-color:var(--
 
 <div id="menu"><div class="card">
   <h2>Jordglobsquiz</h2>
-  <p class="lead">Välj svårighet och vad du vill öva på.</p>
+  <p class="lead">Välj svårighet och vad du vill öva på. Staplarna visar hur väl du behärskar städerna.</p>
   <div class="level">
     <div class="level-head"><span>Svårighet</span><b id="levelName"></b></div>
     <div class="level-desc" id="levelDesc"></div>
@@ -509,7 +510,7 @@ function renderMenu(){
     html += '<button class="opt' + (m.quick ? ' quick' : '') + '" data-i="' + i + '"' + (n ? '' : ' disabled') + '>' +
               '<div class="row"><span><span class="name">' + esc(m.label) + '</span><span class="desc">' + esc(m.desc) + '</span></span>' +
               '<span class="num">' + n + (n === 1 ? ' stad' : ' städer') + '</span></div>' +
-              (n ? '<div class="mast"><div class="bar"><i style="width:' + pct + '%"></i></div><span>Behärskning ' + pct + ' %</span></div>' : '') +
+              (n ? '<div class="mast" title="Behärskning ' + pct + ' %"><div class="bar"><i style="width:' + pct + '%"></i></div><span>' + pct + ' %</span></div>' : '') +
             '</button>';
     if(m.quick) html += '<div class="divider"></div>';
   });
