@@ -34,10 +34,10 @@ var PLATSER = [
   { namn: 'Bern',            tips: 'Schweiz',          lat: 46.95, lon:   7.45 },
   { namn: 'Wien',            tips: 'Österrike',        lat: 48.21, lon:  16.37 },
   { namn: 'Prag',            tips: 'Tjeckien',         lat: 50.08, lon:  14.44 },
-  { namn: 'Bratislava',      tips: 'Slovakien',        lat: 48.15, lon:  17.11 },
+  /*{ namn: 'Bratislava',      tips: 'Slovakien',        lat: 48.15, lon:  17.11 },*/
   { namn: 'Budapest',        tips: 'Ungern',           lat: 47.50, lon:  19.04 },
-  { namn: 'Bukarest',        tips: 'Rumänien',         lat: 44.43, lon:  26.10 },
-  { namn: 'Sofia',           tips: 'Bulgarien',        lat: 42.70, lon:  23.32 },
+  /*{ namn: 'Bukarest',        tips: 'Rumänien',         lat: 44.43, lon:  26.10 },*/
+  /*{ namn: 'Sofia',           tips: 'Bulgarien',        lat: 42.70, lon:  23.32 },*/
   { namn: 'Aten',            tips: 'Grekland',         lat: 37.98, lon:  23.73 },
   { namn: 'Rom',             tips: 'Italien',          lat: 41.90, lon:  12.50 },
   { namn: 'Madrid',          tips: 'Spanien',          lat: 40.42, lon:  -3.70 },
@@ -45,9 +45,9 @@ var PLATSER = [
   { namn: 'Zagreb',          tips: 'Kroatien',         lat: 45.81, lon:  15.98 },
   { namn: 'Belgrad',         tips: 'Serbien',          lat: 44.79, lon:  20.45 },
   { namn: 'Sarajevo',        tips: 'Bosnien-Hercegovina', lat: 43.86, lon: 18.41 },
-  { namn: 'Skopje',          tips: 'Nordmakedonien',   lat: 41.99, lon:  21.43 },
-  { namn: 'Tirana',          tips: 'Albanien',         lat: 41.33, lon:  19.82 },
-  { namn: 'Chișinău',        tips: 'Moldavien',        lat: 47.01, lon:  28.86 },
+  /*{ namn: 'Skopje',          tips: 'Nordmakedonien',   lat: 41.99, lon:  21.43 },*/
+  /*{ namn: 'Tirana',          tips: 'Albanien',         lat: 41.33, lon:  19.82 },*/
+  /*{ namn: 'Chișinău',        tips: 'Moldavien',        lat: 47.01, lon:  28.86 },*/
   { namn: 'Moskva',          tips: 'Ryssland',         lat: 55.76, lon:  37.62 },
   { namn: 'Kyjiv',            tips: 'Ukraina',          lat: 50.45, lon:  30.52 },
   { namn: 'Minsk',           tips: 'Belarus',          lat: 53.90, lon:  27.57 },
