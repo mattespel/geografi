@@ -242,9 +242,9 @@ function createGlobe(host, onPlace){
 
   var unitSphere = new THREE.SphereGeometry(1,16,12), ray = new THREE.Raycaster();
 
-  G.resetView = function(){
+  G.home = function(){
 
-  // Center roughly on Europe
+  // Initial view when the page loads: centred roughly on Europe
   var europe = { lat: 50, lon: 15 };
 
   globe.rotation.x = europe.lat * R;
@@ -255,7 +255,14 @@ function createGlobe(host, onPlace){
   cam.position.z = DEFZ;
   G.target = null;
 };
-  G.resetView();
+  G.home();
+
+  // Between questions: a region game glides to its region; a global game stays where it is and just zooms out
+  G.resetView = function(view){
+    G.target = null;
+    if(view){ G.target = rotationFor(view); G.camZ = view.z; }
+    else G.camZ = DEFZ;
+  };
 
   function frame(){
     G.raf = 0;
@@ -345,7 +352,7 @@ function createGlobe(host, onPlace){
   };
 
   // Clear pins for the next question
-  G.next = function(){ G.ans = null; G.guess = null; G.locked = false; G.resetView(); marks(); };
+  G.next = function(view){ G.ans = null; G.guess = null; G.locked = false; G.resetView(view); marks(); };
 
   function pinchDist(){ var k = Object.keys(G.pts), a = G.pts[k[0]], b = G.pts[k[1]]; return Math.hypot(a.x-b.x, a.y-b.y); }
   function place(e){
@@ -440,6 +447,17 @@ function pickWeighted(pool, n){
 /* --- Menu: the list of game modes is built from the data in platser.js --- */
 function genitive(w){ return /s$/.test(w) ? w : w + 's'; }   // Europa -> Europas, Asien -> Asiens
 
+// Centre and zoom that frame a list of cities: average direction, zoom fitted to the spread (ignoring the ~10% most distant outliers)
+function viewFor(list){
+  var sum = new THREE.Vector3();
+  list.forEach(function(c){ sum.add(vec(c.lat, c.lon)); });
+  if(sum.length() < .05) return null;
+  var ctr = sum.clone().normalize(),
+      ang = list.map(function(c){ return angleBetween(ctr, vec(c.lat, c.lon)); }).sort(function(a, b){ return a - b; }),
+      th = ang[Math.floor(.9*(ang.length-1))], ll = latlon(ctr);
+  return { lat: ll.lat, lon: ll.lon, z: Math.min(fitZ(th), DEFZ) };
+}
+
 function buildModes(){
   var all = CITIES.filter(inLevel), nAll = all.length;
   var modes = [{
@@ -464,7 +482,8 @@ function buildModes(){
     modes.push({
       id: k, label: genitive(k) + ' huvudstäder',
       desc: !n ? 'Inga städer på den här nivån' : (CATEGORY_ROUNDS && r < n) ? r + ' slumpade av ' + n : 'Alla ' + n,
-      pool: pool, rounds: r
+      pool: pool, rounds: r,
+      view: viewFor(by[k])   // uses all cities of the continent, so it stays the same on every level
     });
   });
   return modes;
@@ -531,7 +550,7 @@ function startGame(mode){
 
   $('menu').classList.remove('on');
   $('end').classList.remove('on');
-  G.next();
+  G.next(mode.view);
   show(0);
 }
 
@@ -564,7 +583,7 @@ function finish(){
 
 $('btn').addEventListener('click', function(){
   if(!G.locked){ if(G.guess) check(); }
-  else if(idx < order.length-1){ idx++; G.next(); show(idx); }
+  else if(idx < order.length-1){ idx++; G.next(currentMode.view); show(idx); }
   else finish();
 });
 $('again').addEventListener('click', function(){ startGame(currentMode); });
