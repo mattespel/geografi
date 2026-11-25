@@ -73,10 +73,10 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 
 /* ---------- 1. SETTINGS ---------- */
 var R = Math.PI / 180;
-var MINZ = 1.15, MAXZ = 6, DEFZ = 3.7, REVEALZ = 1.4, MAXTILT = 1.55, MAXDPR = 2, MARKER = 0.8;
+var MINZ = 1.15, MAXZ = 6, DEFZ = 3.7, REVEALZ = 1.4, MAXTILT = 1.55, MAXDPR = 3, MARKER = 0.8;
 var NIGHT = 0.5, SUN_LON = null, SUNDIST = 12, SUNSIZE = 2.5, SUNFADE = 0.5;
 var FIT = 0.7, TANH = Math.tan(17.5 * R);
-var TEXTURE_SRC = 'earth.avif', THREE_SRC = 'three.min.js';
+var TEXTURE_SRC = 'earth.avif', THREE_SRC = '_three.min.js';
 var COL_GUESS = 0xd1432b, COL_TRUTH = 0x1c8a5a, COL_ARC = 0xffd24a;
 
 // Scoring
@@ -224,6 +224,9 @@ function createGlobe(host, onPlace){
       t.generateMipmaps = false; t.minFilter = THREE.LinearFilter;
       t.anisotropy = ren.capabilities.getMaxAnisotropy();
       mat.map = t; mat.needsUpdate = true;
+      var max = ren.capabilities.maxTextureSize, im = t.image;
+      console.log('Globe texture: ' + im.width + 'x' + im.height + ', this device\'s max is ' + max + 'px' +
+        (im.width > max ? ' (it will be scaled down)' : ''));
       cv.style.transition = 'opacity .25s'; cv.style.opacity = 1; kick();
     }, undefined, function(){
       mat.color.set(0x9fc3d6); cv.style.opacity = 1; kick();
