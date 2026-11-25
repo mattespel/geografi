@@ -142,6 +142,10 @@ var NEAR_MISS_MAX = 0.5;     // a wrong-but-close guess gives at most this targe
 var NEAR_MISS_KM = 2000;     // distance at which a miss is worth nothing
 var WEIGHT_FLOOR = 0.1;      // known cities still get this much chance of being drawn (weak ones get up to 1.1)
 var STORE_KEY = 'jordglobsquiz.styrka.v1';
+// Forgetting: the first FADE_AFTER_DAYS days away are free; after that every city loses FADE_PER_DAY (relative) per extra day
+var FADE_PER_DAY = 0.01;     // 1% of current strength per day
+var FADE_AFTER_DAYS = 3;     // grace period: 3 days away = no loss, 4 days = 1%, 10 days = ~7%
+var FADE_KEY = 'jordglobsquiz.sistaspel.v1';
 // Difficulty levels. A city is included if its svårighet (0..1 in platser.js) is <= the level's max.
 // Levels are cumulative: "Medel" includes the easy cities too, "Svårt" includes everything.
 var LEVELS = [
@@ -429,10 +433,26 @@ function learn(c, km){
   v += (target > v ? RISE : FALL) * (target - v);
   memory[cityKey(c)] = Math.round(v*1000)/1000;
   saveMemory();
+  stamp(Date.now());   // remember when the player last played
 }
 function mastery(pool){
   return pool.reduce(function(sum, c){ return sum + strengthOf(c); }, 0) / pool.length;
 }
+/* --- Forgetting: one global fade, applied once when the page opens after a break --- */
+function stamp(t){ try{ localStorage.setItem(FADE_KEY, String(t)); }catch(e){} }
+function applyFade(){
+  var now = Date.now(), last = NaN;
+  try{ last = parseInt(localStorage.getItem(FADE_KEY), 10); }catch(e){}
+  if(isNaN(last) || last > now){ stamp(now); return; }   // first visit (or clock set back): start counting from now
+  var days = Math.floor((now - last)/864e5) - FADE_AFTER_DAYS;   // only the days beyond the grace period count
+  if(days < 1) return;
+  var f = Math.pow(1 - FADE_PER_DAY, days);
+  Object.keys(memory).forEach(function(k){ memory[k] = Math.round(memory[k]*f*1000)/1000; });
+  saveMemory();
+  stamp(last + days*864e5);    // move the clock on by the days just charged; the grace period keeps counting from the real last play
+}
+applyFade();
+
 // Draw n cities without replacement; weaker cities are more likely to be drawn
 function pickWeighted(pool, n){
   var items = pool.map(function(c){ return { c:c, w: WEIGHT_FLOOR + 1 - strengthOf(c) }; }), out = [];
