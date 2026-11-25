@@ -42,13 +42,20 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 
 /* menu */
 #modes{display:flex;flex-direction:column;gap:10px}
-button.opt{display:flex;justify-content:space-between;align-items:center;gap:16px;width:100%;text-align:left;
+button.opt{display:block;width:100%;text-align:left;
   background:var(--panel);color:var(--ink);border:1px solid var(--line);padding:14px 18px;font-weight:500}
 button.opt:hover{border-color:var(--gold)}
 button.opt.quick{background:var(--gold);color:#1a1400;border-color:var(--gold);margin-bottom:10px}
 button.opt .name{font-size:1.1rem;font-weight:700}
 button.opt .desc{display:block;font-size:.85rem;opacity:.75;font-weight:400;margin-top:2px}
 button.opt .num{font-variant-numeric:tabular-nums;white-space:nowrap;font-size:.95rem;opacity:.85}
+.row{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.mast{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:.85rem}
+.mast .bar{flex:1;height:5px;border-radius:3px;background:var(--line);overflow:hidden}
+.mast .bar i{display:block;height:100%;background:#4cc790}
+.mast span{min-width:9.5em;text-align:right;font-variant-numeric:tabular-nums;opacity:.85}
+button.opt.quick .mast .bar{background:rgba(0,0,0,.2)}
+button.opt.quick .mast .bar i{background:#1a1400}
 .divider{height:1px;background:var(--line);margin:8px 0 14px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -114,6 +121,13 @@ var ZERO_KM   = 4000;        // distance at which a round's accuracy reaches 0%
 // Menu / game length
 var QUICK_ROUNDS = 10;       // cities in "Snabbspel"
 var CATEGORY_ROUNDS = 10;    // cities per round in a continent game. Set to 0 to play ALL cities of the continent.
+// Memory strength (one number per city, 0 = unknown, 1 = mastered)
+var RISE = 0.35;             // how far strength moves toward the target after a good answer
+var FALL = 0.50;             // ...after a bad answer (faster than RISE, so a lucky guess doesn't count for much)
+var NEAR_MISS_MAX = 0.5;     // a wrong-but-close guess gives at most this target strength
+var NEAR_MISS_KM = 2000;     // distance at which a miss is worth nothing
+var WEIGHT_FLOOR = 0.1;      // known cities still get this much chance of being drawn (weak ones get up to 1.1)
+var STORE_KEY = 'jordglobsquiz.styrka.v1';
 var CONTINENT_FIELD = 'världsdel';
 var CONTINENT_ORDER = ['Europa', 'Afrika', 'Asien', 'Nordamerika', 'Sydamerika', 'Oceanien']; // menu order
 
@@ -359,6 +373,33 @@ var G, order, idx, results, t0, timerId, currentMode;
 function clock(ms){ var s = Math.floor(ms/1000); return Math.floor(s/60) + ':' + ('0' + (s%60)).slice(-2); }
 function tick(){ $('timer').textContent = clock(Date.now() - t0); }
 
+/* --- Memory strength, saved in localStorage --- */
+var memory = (function(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }catch(e){ return {}; } })();
+function saveMemory(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(memory)); }catch(e){} }
+function cityKey(c){ return c.stad + '|' + c.land; }
+function strengthOf(c){ var v = memory[cityKey(c)]; return typeof v === 'number' ? v : 0; }
+function learn(c, km){
+  var target = km < CORRECT_KM ? 1 : NEAR_MISS_MAX * clamp(1 - km/NEAR_MISS_KM, 0, 1),
+      v = strengthOf(c);
+  v += (target > v ? RISE : FALL) * (target - v);
+  memory[cityKey(c)] = Math.round(v*1000)/1000;
+  saveMemory();
+}
+function mastery(pool){
+  return pool.reduce(function(sum, c){ return sum + strengthOf(c); }, 0) / pool.length;
+}
+// Draw n cities without replacement; weaker cities are more likely to be drawn
+function pickWeighted(pool, n){
+  var items = pool.map(function(c){ return { c:c, w: WEIGHT_FLOOR + 1 - strengthOf(c) }; }), out = [];
+  n = Math.min(n, items.length);
+  while(out.length < n){
+    var total = items.reduce(function(sum, x){ return sum + x.w; }, 0), r = Math.random()*total, i = 0;
+    for(; i < items.length-1; i++){ r -= items[i].w; if(r <= 0) break; }
+    out.push(items.splice(i, 1)[0].c);
+  }
+  return shuffle(out);
+}
+
 /* --- Menu: the list of game modes is built from the data in platser.js --- */
 function genitive(w){ return /s$/.test(w) ? w : w + 's'; }   // Europa -> Europas, Asien -> Asiens
 
@@ -394,6 +435,7 @@ function showMenu(){
   $('end').classList.remove('on');
   $('city').textContent = 'Jordglobsquiz'; $('hint').textContent = '';
   $('count').textContent = ''; $('timer').textContent = '';
+  renderMenu();   // refresh mastery after every game
   $('menu').classList.add('on');
   var first = $('modes').querySelector('button'); if(first) first.focus();
 }
@@ -402,10 +444,11 @@ function renderMenu(){
   MODES = buildModes();
   var html = '';
   MODES.forEach(function(m, i){
-    var n = m.pool.length;
+    var n = m.pool.length, pct = Math.round(mastery(m.pool)*100);
     html += '<button class="opt' + (m.quick ? ' quick' : '') + '" data-i="' + i + '">' +
-              '<span><span class="name">' + esc(m.label) + '</span><span class="desc">' + esc(m.desc) + '</span></span>' +
-              '<span class="num">' + n + (n === 1 ? ' stad' : ' städer') + '</span>' +
+              '<div class="row"><span><span class="name">' + esc(m.label) + '</span><span class="desc">' + esc(m.desc) + '</span></span>' +
+              '<span class="num">' + n + (n === 1 ? ' stad' : ' städer') + '</span></div>' +
+              '<div class="mast"><div class="bar"><i style="width:' + pct + '%"></i></div><span>Behärskning ' + pct + ' %</span></div>' +
             '</button>';
     if(m.quick) html += '<div class="divider"></div>';
   });
@@ -428,7 +471,7 @@ function show(i){
 
 function startGame(mode){
   currentMode = mode;
-  order = shuffle(mode.pool).slice(0, Math.min(mode.rounds, mode.pool.length));
+  order = pickWeighted(mode.pool, mode.rounds);
   idx = 0;
   results = [];
 
@@ -446,6 +489,7 @@ function startGame(mode){
 function check(){
   var c = order[idx], g = G.guess, d = hav(g.lat, g.lon, c.lat, c.lon), acc = accuracy(d), ok = d < CORRECT_KM;
   results.push({ name:c.stad, km:d, acc:acc, ok:ok });
+  learn(c, d);
   G.reveal(c);
   $('msg').innerHTML = '<b>' + fmt(d) + ' km ifrån</b><br>' + (ok ? 'Rätt!' : 'Inte inom ' + CORRECT_KM + ' km') +
     '<br><span class="g">●</span> din gissning &nbsp; <span class="t">●</span> rätt plats';
@@ -497,7 +541,6 @@ function boot(){
       $('btn').disabled = false;
       $('msg').textContent = 'Tryck igen för att flytta nålen, eller kontrollera svaret.';
     });
-    renderMenu();
     showMenu();
   }catch(e){
     fail('Kunde inte starta', (e && e.message) ? e.message : String(e));
