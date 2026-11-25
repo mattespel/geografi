@@ -47,9 +47,9 @@ var PLATSER = [
   { namn: 'Sarajevo',        tips: 'Bosnien-Hercegovina', lat: 43.86, lon: 18.41 },
   { namn: 'Skopje',          tips: 'Nordmakedonien',   lat: 41.99, lon:  21.43 },
   { namn: 'Tirana',          tips: 'Albanien',         lat: 41.33, lon:  19.82 },
-  { namn: 'Chisinau',        tips: 'Moldavien',        lat: 47.01, lon:  28.86 },
+  { namn: 'Chișinău',        tips: 'Moldavien',        lat: 47.01, lon:  28.86 },
   { namn: 'Moskva',          tips: 'Ryssland',         lat: 55.76, lon:  37.62 },
-  { namn: 'Kyiv',            tips: 'Ukraina',          lat: 50.45, lon:  30.52 },
+  { namn: 'Kyjiv',            tips: 'Ukraina',          lat: 50.45, lon:  30.52 },
   { namn: 'Minsk',           tips: 'Belarus',          lat: 53.90, lon:  27.57 },
 
   // ==========================================
