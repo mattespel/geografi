@@ -128,6 +128,20 @@ var PLATSER = [
   { stad: "Kingstown",        land: "Saint Vincent och Grenadinerna", världsdel: "Nordamerika", lat: 13.16, lon: -61.23, svårighet: 0.90 },
   { stad: "Port of Spain",    land: "Trinidad och Tobago",  världsdel: "Nordamerika", lat: 10.67, lon: -61.52, svårighet: 0.65 },
   { stad: "Washington, D.C.", land: "USA",                  världsdel: "Nordamerika", lat: 38.91, lon: -77.04, svårighet: 0.05 },
-  { stad: "Ottawa",           land: "Kanada",               världsdel: "Nordamerika", lat: 45.42, lon: -75.70, svårighet: 0.10 }
+  { stad: "Ottawa",           land: "Kanada",               världsdel: "Nordamerika", lat: 45.42, lon: -75.70, svårighet: 0.10 },
+
+  // Sydamerika
+  { stad: "Buenos Aires",     land: "Argentina",       världsdel: "Sydamerika", lat: -34.60, lon: -58.38, svårighet: 0.05 },
+  { stad: "Sucre",             land: "Bolivia",         världsdel: "Sydamerika", lat: -19.02, lon: -65.26, svårighet: 0.75 },
+  { stad: "Brasília",          land: "Brasilien",       världsdel: "Sydamerika", lat: -15.79, lon: -47.88, svårighet: 0.20 },
+  { stad: "Santiago",          land: "Chile",           världsdel: "Sydamerika", lat: -33.45, lon: -70.67, svårighet: 0.10 },
+  { stad: "Bogotá",            land: "Colombia",        världsdel: "Sydamerika", lat:   4.71, lon: -74.07, svårighet: 0.10 },
+  { stad: "Quito",             land: "Ecuador",         världsdel: "Sydamerika", lat:  -0.18, lon: -78.47, svårighet: 0.30 },
+  { stad: "Georgetown",        land: "Guyana",          världsdel: "Sydamerika", lat:   6.80, lon: -58.16, svårighet: 0.75 },
+  { stad: "Asunción",          land: "Paraguay",        världsdel: "Sydamerika", lat: -25.26, lon: -57.58, svårighet: 0.50 },
+  { stad: "Lima",              land: "Peru",            världsdel: "Sydamerika", lat: -12.05, lon: -77.04, svårighet: 0.10 },
+  { stad: "Paramaribo",        land: "Surinam",         världsdel: "Sydamerika", lat:   5.85, lon: -55.17, svårighet: 0.80 },
+  { stad: "Montevideo",        land: "Uruguay",         världsdel: "Sydamerika", lat: -34.90, lon: -56.19, svårighet: 0.30 },
+  { stad: "Caracas",           land: "Venezuela",       världsdel: "Sydamerika", lat:  10.48, lon: -66.90, svårighet: 0.20 }
   
 ];
