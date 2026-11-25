@@ -56,6 +56,13 @@ button.opt .num{font-variant-numeric:tabular-nums;white-space:nowrap;font-size:.
 .mast span{min-width:9.5em;text-align:right;font-variant-numeric:tabular-nums;opacity:.85}
 button.opt.quick .mast .bar{background:rgba(0,0,0,.2)}
 button.opt.quick .mast .bar i{background:#1a1400}
+.level{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin-bottom:18px}
+.level-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.level-head b{font-size:1.1rem}
+.level-desc{color:var(--dim);font-size:.85rem;margin:2px 0 10px}
+.level input{width:100%;margin:0;accent-color:var(--gold)}
+.level-ends{display:flex;justify-content:space-between;color:var(--dim);font-size:.85rem;margin-top:4px}
+button.opt:disabled{background:var(--panel);color:var(--dim);border-color:var(--line);opacity:.5}
 .divider{height:1px;background:var(--line);margin:8px 0 14px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -74,7 +81,13 @@ button.opt.quick .mast .bar i{background:#1a1400}
 
 <div id="menu"><div class="card">
   <h2>Jordglobsquiz</h2>
-  <p class="lead">Välj vad du vill öva på.</p>
+  <p class="lead">Välj svårighet och vad du vill öva på.</p>
+  <div class="level">
+    <div class="level-head"><span>Svårighet</span><b id="levelName"></b></div>
+    <div class="level-desc" id="levelDesc"></div>
+    <input type="range" id="level" min="0" max="2" step="1" aria-label="Svårighet, från lätt till svårt">
+    <div class="level-ends"><span>Lätt</span><span>Svårt</span></div>
+  </div>
   <div id="modes"></div>
 </div></div>
 
@@ -128,6 +141,17 @@ var NEAR_MISS_MAX = 0.5;     // a wrong-but-close guess gives at most this targe
 var NEAR_MISS_KM = 2000;     // distance at which a miss is worth nothing
 var WEIGHT_FLOOR = 0.1;      // known cities still get this much chance of being drawn (weak ones get up to 1.1)
 var STORE_KEY = 'jordglobsquiz.styrka.v1';
+// Difficulty levels. A city is included if its svårighet (0..1 in platser.js) is <= the level's max.
+// Levels are cumulative: "Medel" includes the easy cities too, "Svårt" includes everything.
+var LEVELS = [
+  { name:'Lätt',  max:0.30, desc:'Bara de mest kända städerna' },
+  { name:'Medel', max:0.70, desc:'Kända och medelsvåra städer' },
+  { name:'Svårt', max:1.00, desc:'Alla städer, även de svåraste' }
+];
+var DEFAULT_LEVEL = 2;       // index in LEVELS used the first time (2 = Svårt = all cities)
+var DIFFICULTY_FIELD = 'svårighet';
+var DEFAULT_DIFFICULTY = 1;  // used for cities that have no svårighet value (1 = only shown on "Svårt")
+var LEVEL_KEY = 'jordglobsquiz.niva.v1';
 var CONTINENT_FIELD = 'världsdel';
 var CONTINENT_ORDER = ['Europa', 'Afrika', 'Asien', 'Nordamerika', 'Sydamerika', 'Oceanien']; // menu order
 
@@ -373,6 +397,19 @@ var G, order, idx, results, t0, timerId, currentMode;
 function clock(ms){ var s = Math.floor(ms/1000); return Math.floor(s/60) + ':' + ('0' + (s%60)).slice(-2); }
 function tick(){ $('timer').textContent = clock(Date.now() - t0); }
 
+/* --- Difficulty level, saved in localStorage --- */
+var level = (function(){
+  try{ var v = parseInt(localStorage.getItem(LEVEL_KEY), 10); if(v >= 0 && v < LEVELS.length) return v; }catch(e){}
+  return DEFAULT_LEVEL;
+})();
+function difficultyOf(c){ var d = parseFloat(c[DIFFICULTY_FIELD]); return isNaN(d) ? DEFAULT_DIFFICULTY : d; }
+function inLevel(c){ return difficultyOf(c) <= LEVELS[level].max + 1e-9; }
+function renderLevel(){
+  $('level').value = level;
+  $('levelName').textContent = LEVELS[level].name;
+  $('levelDesc').textContent = LEVELS[level].desc;
+}
+
 /* --- Memory strength, saved in localStorage --- */
 var memory = (function(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }catch(e){ return {}; } })();
 function saveMemory(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(memory)); }catch(e){} }
@@ -404,11 +441,14 @@ function pickWeighted(pool, n){
 function genitive(w){ return /s$/.test(w) ? w : w + 's'; }   // Europa -> Europas, Asien -> Asiens
 
 function buildModes(){
+  var all = CITIES.filter(inLevel), nAll = all.length;
   var modes = [{
     id: 'quick', quick: true, label: 'Snabbspel',
-    desc: QUICK_ROUNDS + ' slumpade städer från hela världen',
-    pool: CITIES, rounds: QUICK_ROUNDS
+    desc: nAll > QUICK_ROUNDS ? QUICK_ROUNDS + ' slumpade städer från hela världen'
+        : nAll ? 'Alla städer från hela världen' : 'Inga städer på den här nivån',
+    pool: all, rounds: QUICK_ROUNDS
   }];
+  // Group ALL cities by continent first, so every continent stays in the menu even if the level leaves it empty
   var by = {};
   CITIES.forEach(function(c){
     var k = c[CONTINENT_FIELD]; if(!k) return;
@@ -419,11 +459,12 @@ function buildModes(){
     if(i < 0) i = 99; if(j < 0) j = 99;
     return (i - j) || a.localeCompare(b, 'sv');
   }).forEach(function(k){
-    var n = by[k].length, r = CATEGORY_ROUNDS ? Math.min(CATEGORY_ROUNDS, n) : n;
+    var pool = by[k].filter(inLevel), n = pool.length,
+        r = CATEGORY_ROUNDS ? Math.min(CATEGORY_ROUNDS, n) : n;
     modes.push({
       id: k, label: genitive(k) + ' huvudstäder',
-      desc: (CATEGORY_ROUNDS && r < n) ? r + ' slumpade av ' + n : 'Alla ' + n,
-      pool: by[k], rounds: r
+      desc: !n ? 'Inga städer på den här nivån' : (CATEGORY_ROUNDS && r < n) ? r + ' slumpade av ' + n : 'Alla ' + n,
+      pool: pool, rounds: r
     });
   });
   return modes;
@@ -441,19 +482,26 @@ function showMenu(){
 }
 
 function renderMenu(){
+  renderLevel();
   MODES = buildModes();
   var html = '';
   MODES.forEach(function(m, i){
-    var n = m.pool.length, pct = Math.round(mastery(m.pool)*100);
-    html += '<button class="opt' + (m.quick ? ' quick' : '') + '" data-i="' + i + '">' +
+    var n = m.pool.length, pct = n ? Math.round(mastery(m.pool)*100) : 0;
+    html += '<button class="opt' + (m.quick ? ' quick' : '') + '" data-i="' + i + '"' + (n ? '' : ' disabled') + '>' +
               '<div class="row"><span><span class="name">' + esc(m.label) + '</span><span class="desc">' + esc(m.desc) + '</span></span>' +
               '<span class="num">' + n + (n === 1 ? ' stad' : ' städer') + '</span></div>' +
-              '<div class="mast"><div class="bar"><i style="width:' + pct + '%"></i></div><span>Behärskning ' + pct + ' %</span></div>' +
+              (n ? '<div class="mast"><div class="bar"><i style="width:' + pct + '%"></i></div><span>Behärskning ' + pct + ' %</span></div>' : '') +
             '</button>';
     if(m.quick) html += '<div class="divider"></div>';
   });
   $('modes').innerHTML = html;
 }
+
+$('level').addEventListener('input', function(){
+  level = +this.value;
+  try{ localStorage.setItem(LEVEL_KEY, String(level)); }catch(e){}
+  renderMenu();   // only #modes is redrawn, so the slider keeps focus while dragging
+});
 
 $('modes').addEventListener('click', function(e){
   var b = e.target.closest('button.opt'); if(!b) return;
@@ -470,6 +518,7 @@ function show(i){
 }
 
 function startGame(mode){
+  if(!mode.pool.length) return;
   currentMode = mode;
   order = pickWeighted(mode.pool, mode.rounds);
   idx = 0;
