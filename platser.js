@@ -50,7 +50,7 @@ var PLATSER = [
   /*{ namn: 'Chișinău',        tips: 'Moldavien',        lat: 47.01, lon:  28.86 },*/
   { namn: 'Moskva',          tips: 'Ryssland',         lat: 55.76, lon:  37.62 },
   { namn: 'Kyjiv',            tips: 'Ukraina',          lat: 50.45, lon:  30.52 },
-  { namn: 'Minsk',           tips: 'Belarus',          lat: 53.90, lon:  27.57 },
+  { namn: 'Minsk',           tips: 'Belarus',          lat: 53.90, lon:  27.57 }
 
   // ==========================================
   // ASIEN
