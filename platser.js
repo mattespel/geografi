@@ -55,6 +55,7 @@ var PLATSER = [
   // ==========================================
   // ASIEN
   // ==========================================
+   /*
 
   { namn: 'Tokyo',           tips: 'Japan',            lat: 35.68, lon: 139.69 },
   { namn: 'Peking',          tips: 'Kina',             lat: 39.90, lon: 116.41 },
@@ -196,5 +197,6 @@ var PLATSER = [
   { namn: 'Nukuʻalofa',      tips: 'Tonga',            lat: -21.21, lon: -175.15 },
   { namn: 'Tarawa',          tips: 'Kiribati',         lat:   1.45, lon:  173.00 },
   { namn: 'Palikir',         tips: 'Mikronesiska federationen', lat: 6.92, lon: 158.16 }
+  */
 
 ];
