@@ -77,7 +77,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 
 /* ---------- 1. SETTINGS ---------- */
 var R = Math.PI / 180;
-var MINZ = 1.15, MAXZ = 6, DEFZ = 3.7, REVEALZ = 1.4, MAXTILT = 1.55, MAXDPR = 3, MARKER = 0.8;
+var MINZ = 1.15, MAXZ = 8, DEFZ = 4.3, REVEALZ = 1.4, MAXTILT = 1.55, MAXDPR = 3, MARKER = 0.8;
 var NIGHT = 0.5, SUN_LON = null, SUNDIST = 12, SUNSIZE = 2.5, SUNFADE = 0.5;
 var FIT = 0.7, TANH = Math.tan(17.5 * R);
 var TEXTURE_SRC = 'earth.avif', THREE_SRC = 'three.min.js';
@@ -338,10 +338,18 @@ function show(i){
 }
 
 function startGame(){
-  order = shuffle(CITIES); idx = 0; results = [];
-  t0 = Date.now(); tick(); clearInterval(timerId); timerId = setInterval(tick, 500);
+  order = shuffle(CITIES).slice(0, Math.min(10, CITIES.length));
+  idx = 0;
+  results = [];
+
+  t0 = Date.now();
+  tick();
+  clearInterval(timerId);
+  timerId = setInterval(tick, 500);
+
   $('end').classList.remove('on');
-  G.next(); show(0);
+  G.next();
+  show(0);
 }
 
 function check(){
