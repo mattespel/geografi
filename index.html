@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sv">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Globe quiz</title>
+<title>Jordglobsquiz</title>
 <style>
 :root{--bg:#0e1a24;--panel:#16293a;--ink:#eef3f6;--dim:#93a8b6;--line:#2a4256;--guess:#d1432b;--truth:#1c8a5a;--gold:#ffd24a}
 *{box-sizing:border-box}
@@ -16,7 +16,9 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 .city{font-family:Georgia,"Times New Roman",serif;font-size:clamp(1.5rem,5vw,2.4rem);line-height:1.1;margin:0}
 .sub{color:var(--dim);font-size:.95rem;margin-top:4px}
 .count{color:var(--dim);font-size:.95rem;white-space:nowrap;padding-top:6px;text-align:right}
-#msg{min-height:2.6em;text-align:center;font-size:1rem;color:var(--dim);line-height:1.35}
+#msg{min-height:2.6em;text-align:center;font-size:1.05rem;color:#fff;line-height:1.35;text-shadow:0 1px 3px #000,0 0 12px #000}
+.bottom{padding-top:56px}
+#timer{font-variant-numeric:tabular-nums;color:var(--ink);font-size:1.1rem;margin-top:2px}
 #msg b{color:var(--ink);font-size:1.25rem}
 .g{color:var(--guess)}.t{color:var(--truth)}
 button{pointer-events:auto;font:inherit;font-weight:600;border:0;border-radius:10px;padding:12px 28px;background:var(--gold);color:#1a1400;cursor:pointer;min-width:200px}
@@ -41,30 +43,32 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 <div id="geo"></div>
 
 <div class="top">
-  <div><h1 class="city" id="city">Loading…</h1><div class="sub" id="hint"></div></div>
-  <div class="count" id="count"></div>
+  <div><h1 class="city" id="city">Laddar…</h1><div class="sub" id="hint"></div></div>
+  <div class="count"><div id="count"></div><div id="timer">0:00</div></div>
 </div>
 <div class="bottom">
-  <div id="msg">Drag to rotate, pinch or scroll to zoom, tap to place your pin.</div>
-  <button id="btn" disabled>Check answer</button>
+  <div id="msg">Dra för att snurra, nyp eller scrolla för att zooma, tryck för att sätta din nål.</div>
+  <button id="btn" disabled title="Mellanslag eller Enter">Kontrollera svar</button>
 </div>
 
 <div id="end"><div class="card">
-  <h2>Results</h2>
+  <h2>Resultat</h2>
   <div class="stats">
-    <div><strong id="rScore"></strong>within 100 km</div>
-    <div><strong id="rAcc"></strong>accuracy</div>
-    <div><strong id="rAvg"></strong>average distance</div>
+    <div><strong id="rScore"></strong>inom 100 km</div>
+    <div><strong id="rAcc"></strong>träffsäkerhet</div>
+    <div><strong id="rTime"></strong>tid</div>
+    <div><strong id="rAvg"></strong>genomsnittligt avstånd</div>
   </div>
-  <table><thead><tr><th>City</th><th class="n">Distance</th><th class="n">Accuracy</th></tr></thead><tbody id="rRows"></tbody></table>
-  <button id="again">Play again</button>
+  <table><thead><tr><th>Plats</th><th class="n">Avstånd</th><th class="n">Träff</th></tr></thead><tbody id="rRows"></tbody></table>
+  <button id="again">Spela igen</button>
 </div></div>
 
+<script src="platser.js"></script>
 <script>
 /* ==========================================================================
    GLOBE QUIZ  (standalone version of the Anki globe card)
    Needs, in the same folder as this file:
-     three.min.js, earth.avif
+     three.min.js, earth.avif, platser.js
    Structure:
      1. SETTINGS   2. QUESTIONS   3. HELPERS   4. GLOBE ENGINE   5. GAME
    ========================================================================== */
@@ -84,19 +88,8 @@ var CORRECT_KM = 100;        // within this distance counts as correct
 var ZERO_KM   = 4000;        // distance at which a round's accuracy reaches 0%
 // Per-round accuracy = 100% at 0 km, falling linearly to 0% at ZERO_KM.
 
-/* ---------- 2. QUESTIONS (edit this list) ---------- */
-var CITIES = [
-  { name: 'Tokyo',          hint: 'Japan',        lat:  35.68, lon:  139.69 },
-  { name: 'Cairo',          hint: 'Egypt',        lat:  30.04, lon:   31.24 },
-  { name: 'Rio de Janeiro', hint: 'Brazil',       lat: -22.91, lon:  -43.17 },
-  { name: 'Sydney',         hint: 'Australia',    lat: -33.87, lon:  151.21 },
-  { name: 'Reykjavik',      hint: 'Iceland',      lat:  64.15, lon:  -21.94 },
-  { name: 'Nairobi',        hint: 'Kenya',        lat:  -1.29, lon:   36.82 },
-  { name: 'Mexico City',    hint: 'Mexico',       lat:  19.43, lon:  -99.13 },
-  { name: 'Mumbai',         hint: 'India',        lat:  19.08, lon:   72.88 },
-  { name: 'Moscow',         hint: 'Russia',       lat:  55.76, lon:   37.62 },
-  { name: 'Vancouver',      hint: 'Canada',       lat:  49.28, lon: -123.12 }
-];
+/* ---------- 2. QUESTIONS: edit platser.js, not this file ---------- */
+var CITIES = window.PLATSER || [];
 
 /* ---------- 3. HELPERS ---------- */
 function $(id){ return document.getElementById(id); }
@@ -142,7 +135,7 @@ function shuffle(a){
   return a;
 }
 function accuracy(km){ return clamp(100*(1 - km/ZERO_KM), 0, 100); }
-function fmt(n){ return Math.round(n).toLocaleString('en'); }
+function fmt(n){ return Math.round(n).toLocaleString('sv'); }
 
 /* ---------- 4. GLOBE ENGINE ---------- */
 function createGlobe(host, onPlace){
@@ -230,7 +223,7 @@ function createGlobe(host, onPlace){
       cv.style.transition = 'opacity .25s'; cv.style.opacity = 1; kick();
     }, undefined, function(){
       mat.color.set(0x9fc3d6); cv.style.opacity = 1; kick();
-      $('msg').textContent = 'Could not load ' + fullUrl(TEXTURE_SRC) + ' (file missing, wrong name, or the browser cannot open it). Paste that address into a new tab to test.';
+      $('msg').textContent = 'Kunde inte ladda ' + fullUrl(TEXTURE_SRC) + ' (filen saknas, har fel namn eller kan inte öppnas av webbläsaren).';
     });
   }
   loadTex();
@@ -322,37 +315,43 @@ function createGlobe(host, onPlace){
 }
 
 /* ---------- 5. GAME ---------- */
-var G, order, idx, results;
+var G, order, idx, results, t0, timerId;
+
+function clock(ms){ var s = Math.floor(ms/1000); return Math.floor(s/60) + ':' + ('0' + (s%60)).slice(-2); }
+function tick(){ $('timer').textContent = clock(Date.now() - t0); }
 
 function show(i){
   var c = order[i];
-  $('city').textContent = c.name; $('hint').textContent = c.hint;
+  $('city').textContent = c.namn; $('hint').textContent = c.tips;
   $('count').textContent = (i+1) + ' / ' + order.length;
-  $('msg').textContent = 'Tap the globe to place your pin.';
-  $('btn').textContent = 'Check answer'; $('btn').disabled = true;
+  $('msg').textContent = 'Tryck på jordgloben för att sätta din nål.';
+  $('btn').textContent = 'Kontrollera svar'; $('btn').disabled = true;
 }
 
 function startGame(){
   order = shuffle(CITIES); idx = 0; results = [];
+  t0 = Date.now(); tick(); clearInterval(timerId); timerId = setInterval(tick, 500);
   $('end').classList.remove('on');
   G.next(); show(0);
 }
 
 function check(){
   var c = order[idx], g = G.guess, d = hav(g.lat, g.lon, c.lat, c.lon), acc = accuracy(d), ok = d < CORRECT_KM;
-  results.push({ name:c.name, km:d, acc:acc, ok:ok });
+  results.push({ name:c.namn, km:d, acc:acc, ok:ok });
   G.reveal(c);
-  $('msg').innerHTML = '<b>' + fmt(d) + ' km off</b> · ' + (ok ? 'Correct' : 'Not within ' + CORRECT_KM + ' km') +
-    '<br><span class="g">●</span> your guess &nbsp; <span class="t">●</span> correct location';
-  $('btn').textContent = idx === order.length-1 ? 'See results' : 'Next city';
+  $('msg').innerHTML = '<b>' + fmt(d) + ' km ifrån</b><br>' + (ok ? 'Rätt!' : 'Inte inom ' + CORRECT_KM + ' km') +
+    '<br><span class="g">●</span> din gissning &nbsp; <span class="t">●</span> rätt plats';
+  $('btn').textContent = idx === order.length-1 ? 'Visa resultat' : 'Nästa plats';
 }
 
 function finish(){
+  clearInterval(timerId); tick();
   var right = results.filter(function(r){ return r.ok; }).length,
       acc = results.reduce(function(s,r){ return s + r.acc; }, 0)/results.length,
       avg = results.reduce(function(s,r){ return s + r.km; }, 0)/results.length;
   $('rScore').textContent = right + ' / ' + results.length;
   $('rAcc').textContent = Math.round(acc) + '%';
+  $('rTime').textContent = clock(Date.now() - t0);
   $('rAvg').textContent = fmt(avg) + ' km';
   $('rRows').innerHTML = results.map(function(r){
     return '<tr><td class="' + (r.ok ? 'ok' : 'no') + '">' + r.name + '</td><td class="n">' + fmt(r.km) +
@@ -368,18 +367,27 @@ $('btn').addEventListener('click', function(){
 });
 $('again').addEventListener('click', startGame);
 
+// Space or Enter does the same as the main button (the end screen's button when it is open)
+document.addEventListener('keydown', function(e){
+  if((e.key !== 'Enter' && e.key !== ' ') || e.repeat) return;
+  if(e.target.tagName === 'BUTTON') return;      // a focused button already handles these keys itself
+  e.preventDefault();
+  ($('end').classList.contains('on') ? $('again') : $('btn')).click();
+});
+
 function fail(title, detail){ $('city').textContent = title; $('msg').textContent = detail; }
 
 function boot(){
-  if(!window.THREE) return fail('Three.js not found', THREE_SRC + ' loaded but did not define THREE. Use the classic build (e.g. r128) that defines a global THREE.');
+  if(!window.THREE) return fail('Three.js hittades inte', THREE_SRC + ' laddades men definierar inte THREE. Använd den klassiska versionen (t.ex. r128).');
+  if(!CITIES.length) return fail('Fil saknas', 'Kunde inte läsa platser från platser.js. Kontrollera att filen ligger i samma mapp.');
   try{
     G = createGlobe($('geo'), function(){
       $('btn').disabled = false;
-      $('msg').textContent = 'Tap again to move the pin, or check your answer.';
+      $('msg').textContent = 'Tryck igen för att flytta nålen, eller kontrollera svaret.';
     });
     startGame();
   }catch(e){
-    fail('Could not start', (e && e.message) ? e.message : String(e));
+    fail('Kunde inte starta', (e && e.message) ? e.message : String(e));
   }
 }
 
@@ -387,7 +395,7 @@ function boot(){
   if(window.THREE) return boot();
   var s = document.createElement('script');
   s.src = THREE_SRC; s.onload = boot;
-  s.onerror = function(){ fail('Missing file', 'Could not load ' + THREE_SRC + ' from this folder.'); };
+  s.onerror = function(){ fail('Fil saknas', 'Kunde inte ladda ' + THREE_SRC + ' från den här mappen.'); };
   document.head.appendChild(s);
 })();
 })();
