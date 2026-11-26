@@ -49,6 +49,7 @@ th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
 th{color:var(--dim);font-weight:500}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .ok{color:#4cc790}.no{color:#e8806b}
+.stats strong.ok{color:#4cc790}.stats strong.no{color:#e8806b}
 .actions{display:flex;gap:12px;flex-wrap:wrap}
 
 /* menu */
@@ -113,6 +114,7 @@ button.opt:disabled{background:var(--panel);color:var(--dim);border-color:var(--
     <div><strong id="rAcc"></strong>träffsäkerhet</div>
     <div><strong id="rTime"></strong>tid</div>
     <div><strong id="rAvg"></strong>genomsnittligt avstånd</div>
+    <div><strong id="rMast"></strong>behärskning (<span id="rMastRange"></span>)</div>
   </div>
   <table><thead><tr><th>Plats</th><th class="n">Avstånd</th><th class="n">Träff</th></tr></thead><tbody id="rRows"></tbody></table>
   <div class="actions">
@@ -424,7 +426,7 @@ function createGlobe(host, onPlace){
 }
 
 /* ---------- 5. MENU & GAME ---------- */
-var G, order, idx, results, t0, timerId, currentMode;
+var G, order, idx, results, t0, timerId, currentMode, masteryBefore;
 
 function clock(ms){ var s = Math.floor(ms/1000); return Math.floor(s/60) + ':' + ('0' + (s%60)).slice(-2); }
 function tick(){ $('timer').textContent = clock(Date.now() - t0); }
@@ -622,6 +624,7 @@ function show(i){
 function startGame(mode){
   if(!mode.pool.length) return;
   currentMode = mode;
+  masteryBefore = mastery(mode.pool);   // for the "how much did it improve" figure on the results screen
   order = pickWeighted(mode.pool, mode.rounds);
   idx = 0;
   results = [];
@@ -659,6 +662,10 @@ function finish(){
   $('rAcc').textContent = Math.round(acc) + '%';
   $('rTime').textContent = clock(Date.now() - t0);
   $('rAvg').textContent = fmt(avg) + ' km';
+  var m0 = Math.round(masteryBefore*100), m1 = Math.round(mastery(currentMode.pool)*100), dm = m1 - m0, el = $('rMast');
+  el.textContent = (dm > 0 ? '+' : dm < 0 ? '−' : '') + Math.abs(dm) + ' %';
+  el.className = dm > 0 ? 'ok' : dm < 0 ? 'no' : '';
+  $('rMastRange').textContent = m0 + ' → ' + m1 + ' %';
   $('rRows').innerHTML = results.map(function(r){
     return '<tr><td class="' + (r.ok ? 'ok' : 'no') + '">' + esc(r.name) + '</td><td class="n">' + fmt(r.km) +
            ' km</td><td class="n">' + Math.round(r.acc) + '%</td></tr>';
