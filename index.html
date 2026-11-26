@@ -169,6 +169,7 @@ var SUN_KEY = 'jordglobsquiz.sol.v1';
 var SOUND_DIR = 'sound/';
 var SOUND_KEY = 'jordglobsquiz.ljud.v1';
 var VERYCORRECT_KM = 25;     // a guess this close plays verycorrect.ogg (instead of correct.ogg)
+var VERYWRONG_KM = ZERO_KM;
 var SUCCESS_AVG_KM = 100;    // at the end: average distance this or less plays success.ogg, otherwise defeat.ogg
 // Difficulty levels. A city is included if its svårighet (0..1 in platser.js) is <= the level's max.
 // Levels are cumulative: "Medel" includes the easy cities too, "Svårt" includes everything.
@@ -457,7 +458,7 @@ function renderSound(){
   b.title = t; b.setAttribute('aria-label', t);
 }
 var SOUNDS = {};
-['success', 'defeat', 'verycorrect', 'correct', 'wrong'].forEach(function(n){
+['success', 'defeat', 'verycorrect', 'correct', 'wrong', 'verywrong'].forEach(function(n){
   var a = new Audio(SOUND_DIR + n + '.ogg'); a.preload = 'auto'; SOUNDS[n] = a;
 });
 function play(n){
@@ -645,7 +646,10 @@ function check(){
   var c = order[idx], g = G.guess, d = hav(g.lat, g.lon, c.lat, c.lon), acc = accuracy(d), ok = d < CORRECT_KM;
   results.push({ name:c.stad, km:d, acc:acc, ok:ok });
   learn(c, d);
-  play(d <= VERYCORRECT_KM ? 'verycorrect' : ok ? 'correct' : 'wrong');
+  play(d <= VERYCORRECT_KM ? 'verycorrect'
+   : ok                  ? 'correct'
+   : d > VERYWRONG_KM    ? 'verywrong'
+   :                       'wrong');
   G.reveal(c);
   $('msg').innerHTML = '<b>' + fmt(d) + ' km ifrån</b><br>' + (ok ? 'Rätt!' : 'Inte inom ' + CORRECT_KM + ' km') +
     '<br><span class="g">●</span> din gissning &nbsp; <span class="t">●</span> rätt plats';
