@@ -11,9 +11,10 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 #geo{position:fixed;inset:0;touch-action:none;-webkit-user-select:none;user-select:none}
 #geo canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
 .top,.bottom{position:fixed;left:0;right:0;padding:14px 18px;pointer-events:none;display:flex;gap:12px;z-index:2}
-.top{top:0;padding-top:calc(14px + env(safe-area-inset-top,0px));justify-content:space-between;align-items:flex-start;background:linear-gradient(var(--bg),transparent)}
-.bottom{bottom:0;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px));flex-direction:column;align-items:center;background:linear-gradient(transparent,var(--bg))}
+.top{top:0;padding-top:calc(14px + env(safe-area-inset-top,0px));justify-content:space-between;align-items:flex-start}
+.bottom{bottom:0;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px));flex-direction:column;align-items:center}
 .city{font-family:Georgia,"Times New Roman",serif;font-size:clamp(1.5rem,5vw,2.4rem);line-height:1.1;margin:0}
+.city,.sub,.count{text-shadow:0 1px 3px #000,0 0 12px rgba(0,0,0,.8)}
 .sub{color:var(--dim);font-size:.95rem;margin-top:4px}
 .count{color:var(--dim);font-size:.95rem;white-space:nowrap;text-align:right}
 #msg{min-height:2.6em;text-align:center;font-size:1.05rem;color:#fff;line-height:1.35;text-shadow:0 1px 3px #000,0 0 12px #000}
@@ -135,7 +136,7 @@ button.opt:disabled{background:var(--panel);color:var(--dim);border-color:var(--
 /* ---------- 1. SETTINGS ---------- */
 var R = Math.PI / 180;
 var MINZ = 1.15, MAXZ = 8, DEFZ = 4.3, REVEALZ = 1.4, MAXTILT = 1.55, MAXDPR = 3, MARKER = 0.8;
-var NIGHT = 0.5, SUN_LON = null, SUNDIST = 12, SUNSIZE = 2.5, SUNFADE = 0.5;
+var NIGHT = 0.5, SUN_LON = null, SUNDIST = 12, SUNSIZE = 2.5;
 var FIT = 0.7, TANH = Math.tan(17.5 * R);
 var TEXTURE_SRC = 'earth.avif', THREE_SRC = 'three.min.js';
 var COL_GUESS = 0xd1432b, COL_TRUTH = 0x1c8a5a, COL_ARC = 0xffd24a;
@@ -308,12 +309,7 @@ function createGlobe(host, onPlace){
     _sunPos.copy(sunLocal).applyQuaternion(globe.quaternion).multiplyScalar(SUNDIST);
     sun.position.copy(_sunPos); cam.updateMatrixWorld();
     _sunView.copy(_sunPos).applyMatrix4(cam.matrixWorldInverse);
-    var fade = 0;
-    if(_sunView.z < 0){
-      _sunPos.project(cam);
-      fade = clamp((1 - Math.max(Math.abs(_sunPos.x), Math.abs(_sunPos.y)))/SUNFADE, 0, 1);
-      fade = fade*fade*(3-2*fade);
-    }
+    var fade = _sunView.z < 0 ? 1 : 0;   // visible whenever it is in front of the camera; no fading near the screen edges
     if(!G.sunOn) fade = 0;
     sun.material.opacity = fade; sun.visible = fade > 0;
 
