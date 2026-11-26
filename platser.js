@@ -152,7 +152,7 @@ var PLATSER = [
   { stad: "Thimphu",            land: "Bhutan",                världsdel: "Asien", lat: 27.47, lon:  89.64, svårighet: 0.90 },
   { stad: "Bandar Seri Begawan",land: "Brunei",               världsdel: "Asien", lat:  4.90, lon: 114.94, svårighet: 0.90 },
   { stad: "Phnom Penh",         land: "Kambodja",             världsdel: "Asien", lat: 11.56, lon: 104.93, svårighet: 0.60 },
-  { stad: "Peking",             land: "Kina",                 världsdel: "Asien", lat: 39.90, lon: 116.41, svårighet: 0.05 },
+  { stad: "Beijing",             land: "Kina",                 världsdel: "Asien", lat: 39.90, lon: 116.41, svårighet: 0.05 },
   { stad: "Nicosia",            land: "Cypern",               världsdel: "Asien", lat: 35.19, lon:  33.38, svårighet: 0.60 },
   { stad: "New Delhi",          land: "Indien",               världsdel: "Asien", lat: 28.61, lon:  77.21, svårighet: 0.10 },
   { stad: "Nusantara",          land: "Indonesien",           världsdel: "Asien", lat: -0.97, lon: 116.70, svårighet: 0.20 },
