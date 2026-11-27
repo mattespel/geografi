@@ -469,7 +469,7 @@ function renderSound(){
   b.title = t; b.setAttribute('aria-label', t);
 }
 var SOUNDS = {};
-['success', 'defeat', 'verycorrect', 'correct', 'wrong'].forEach(function(n){
+['success', 'defeat', 'verycorrect', 'correct', 'wrong', 'verywrong'].forEach(function(n){
   var a = new Audio(SOUND_DIR + n + '.ogg'); a.preload = 'auto'; SOUNDS[n] = a;
 });
 function play(n){
@@ -665,7 +665,7 @@ function check(){
   results.push({ name:c.stad, km:d, acc:acc, ok:ok });
   learn(c, d);
   if(ok){ seen[cityKey(c)] = 1; saveSeen(); }   // only a correct answer counts as "seen"; missed cities stay in the running
-  play(d <= VERYCORRECT_KM ? 'verycorrect' : ok ? 'correct' : 'wrong');
+  play(d >= ZERO_KM ? 'verywrong' : d <= VERYCORRECT_KM ? 'verycorrect' : ok ? 'correct' : 'wrong');
   G.reveal(c);
   $('msg').innerHTML = '<b>' + fmt(d) + ' km ifrån</b><br>' + (ok ? 'Rätt!' : 'Inte inom ' + CORRECT_KM + ' km') +
     '<br><span class="g">●</span> din gissning &nbsp; <span class="t">●</span> rätt plats';
