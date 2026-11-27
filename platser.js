@@ -44,7 +44,7 @@ var PLATSER = [
   { stad: 'Madrid',             land: 'Spanien',              världsdel: 'Europa', lat: 40.42, lon:  -3.70, svårighet: 0.05 },
   { stad: 'Stockholm',          land: 'Sverige',              världsdel: 'Europa', lat: 59.33, lon:  18.07, svårighet: 0.05 },
   { stad: 'Bern',               land: 'Schweiz',              världsdel: 'Europa', lat: 46.95, lon:   7.45, svårighet: 0.25 },
-  { stad: 'Kyiv',               land: 'Ukraina',              världsdel: 'Europa', lat: 50.45, lon:  30.52, svårighet: 0.25 },
+  { stad: 'Kyjiv',               land: 'Ukraina',              världsdel: 'Europa', lat: 50.45, lon:  30.52, svårighet: 0.25 },
   { stad: 'Budapest',           land: 'Ungern',               världsdel: 'Europa', lat: 47.50, lon:  19.04, svårighet: 0.20 },
   { stad: 'Vatikanstaten',      land: 'Vatikanstaten',        världsdel: 'Europa', lat: 41.90, lon:  12.45, svårighet: 0.65 },
   { stad: 'London',             land: 'Storbritannien',       världsdel: 'Europa', lat: 51.51, lon:  -0.13, svårighet: 0.00 },
