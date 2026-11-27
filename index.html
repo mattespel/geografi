@@ -52,7 +52,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .stats strong.ok{color:#4cc790}.stats strong.no{color:#e8806b}
 .actions{display:flex;gap:12px;position:sticky;bottom:0;margin:0 -18px;padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px));background:rgba(10,20,30,.94)}
 .actions button{flex:1;min-width:0;padding-left:12px;padding-right:12px}
-
+ 
 /* menu */
 #menu .card{max-width:760px}
 #modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px}
@@ -83,7 +83,7 @@ button.opt:disabled{background:var(--panel);color:var(--dim);border-color:var(--
 </head>
 <body>
 <div id="geo"></div>
-
+ 
 <div class="top">
   <div><h1 class="city" id="city">Laddar…</h1><div class="sub" id="hint"></div></div>
   <div class="count"><div class="tools">
@@ -95,7 +95,7 @@ button.opt:disabled{background:var(--panel);color:var(--dim);border-color:var(--
   <div id="msg">Dra för att snurra, nyp eller scrolla för att zooma, tryck för att sätta din nål.</div>
   <button id="btn" disabled title="Mellanslag eller Enter">Kontrollera svar</button>
 </div>
-
+ 
 <div id="menu"><div class="card">
   <h2>Jordglobsquiz</h2>
   <p class="lead">Välj svårighet och vad du vill öva på. Staplarna visar hur väl du behärskar städerna.</p>
@@ -107,7 +107,7 @@ button.opt:disabled{background:var(--panel);color:var(--dim);border-color:var(--
   </div>
   <div id="modes"></div>
 </div></div>
-
+ 
 <div id="end"><div class="card">
   <h2 id="rTitle">Resultat</h2>
   <div class="stats">
@@ -123,7 +123,7 @@ button.opt:disabled{background:var(--panel);color:var(--dim);border-color:var(--
     <button id="toMenu" class="ghost">Till menyn</button>
   </div>
 </div></div>
-
+ 
 <script src="platser.js"></script>
 <script>
 /* ==========================================================================
@@ -135,20 +135,22 @@ button.opt:disabled{background:var(--panel);color:var(--dim);border-color:var(--
    ========================================================================== */
 (function(){
 'use strict';
-
+ 
 /* ---------- 1. SETTINGS ---------- */
 var R = Math.PI / 180;
 var MINZ = 1.15, MAXZ = 8, DEFZ = 4.3, REVEALZ = 1.4, MAXTILT = 1.55, MAXDPR = 3, MARKER = 0.8;
 var NIGHT = 0.5, SUN_LON = null, SUNDIST = 12, SUNSIZE = 2.5;
 var FIT = 0.7, TANH = Math.tan(17.5 * R);
 var TEXTURE_SRC = 'earth.avif', THREE_SRC = 'three.min.js';
+var TEXTURE_MONTHLY = true;  // true: load textures/earth_01.avif … earth_12.avif for the current month (TEXTURE_SRC is the fallback if that file is missing)
+var TEXTURE_DIR = 'textures/';
 var COL_GUESS = 0xd1432b, COL_TRUTH = 0x1c8a5a, COL_ARC = 0xffd24a;
-
+ 
 // Scoring
 var CORRECT_KM = 100;        // within this distance counts as correct
 var ZERO_KM   = 4000;        // distance at which a round's accuracy reaches 0%
 // Per-round accuracy = 100% at 0 km, falling linearly to 0% at ZERO_KM.
-
+ 
 // Menu / game length
 var QUICK_ROUNDS = 10;       // cities in "Snabbspel"
 var CATEGORY_ROUNDS = 10;    // cities per round in a continent game. Set to 0 to play ALL cities of the continent.
@@ -159,6 +161,9 @@ var NEAR_MISS_MAX = 0.5;     // a wrong-but-close guess gives at most this targe
 var NEAR_MISS_KM = 2000;     // distance at which a miss is worth nothing
 var WEIGHT_FLOOR = 0.1;      // known cities still get this much chance of being drawn (weak ones get up to 1.1)
 var STORE_KEY = 'jordglobsquiz.styrka.v1';
+// Fewer repeats: cities already answered correctly this session get this fraction of their normal chance until every city in the pool has been answered correctly (1 = off)
+var SEEN_FACTOR = 0.1;
+var SEEN_KEY = 'jordglobsquiz.sedda.v1';   // kept in sessionStorage: lasts until the tab is closed
 // Forgetting: the first FADE_AFTER_DAYS days away are free; after that every city loses FADE_PER_DAY (relative) per extra day
 var FADE_PER_DAY = 0.01;     // 1% of current strength per day
 var FADE_AFTER_DAYS = 3;     // grace period: 3 days away = no loss, 4 days = 1%, 10 days = ~7%
@@ -169,7 +174,6 @@ var SUN_KEY = 'jordglobsquiz.sol.v1';
 var SOUND_DIR = 'sound/';
 var SOUND_KEY = 'jordglobsquiz.ljud.v1';
 var VERYCORRECT_KM = 25;     // a guess this close plays verycorrect.ogg (instead of correct.ogg)
-var VERYWRONG_KM = ZERO_KM;
 var SUCCESS_AVG_KM = 100;    // at the end: average distance this or less plays success.ogg, otherwise defeat.ogg
 // Difficulty levels. A city is included if its svårighet (0..1 in platser.js) is <= the level's max.
 // Levels are cumulative: "Medel" includes the easy cities too, "Svårt" includes everything.
@@ -184,10 +188,10 @@ var DEFAULT_DIFFICULTY = 1;  // used for cities that have no svårighet value (1
 var LEVEL_KEY = 'jordglobsquiz.niva.v1';
 var CONTINENT_FIELD = 'världsdel';
 var CONTINENT_ORDER = ['Europa', 'Afrika', 'Asien', 'Nordamerika', 'Sydamerika', 'Oceanien']; // menu order
-
+ 
 /* ---------- 2. QUESTIONS: edit platser.js, not this file ---------- */
 var CITIES = window.PLATSER || [];
-
+ 
 /* ---------- 3. HELPERS ---------- */
 function $(id){ return document.getElementById(id); }
 function clamp(x, lo, hi){ return Math.max(lo, Math.min(hi, x)); }
@@ -225,6 +229,10 @@ function glowTex(){
   x.fillStyle = g; x.fillRect(0,0,128,128);
   return new THREE.CanvasTexture(c);
 }
+function textureList(){
+  var m = ('0' + (new Date().getMonth() + 1)).slice(-2);
+  return TEXTURE_MONTHLY ? [TEXTURE_DIR + 'earth_' + m + '.avif', TEXTURE_SRC] : [TEXTURE_SRC];
+}
 function fullUrl(p){ try{ return new URL(p, location.href).href; }catch(e){ return p; } }
 function shuffle(a){
   a = a.slice();
@@ -234,20 +242,20 @@ function shuffle(a){
 function accuracy(km){ return clamp(100*(1 - km/ZERO_KM), 0, 100); }
 function fmt(n){ return Math.round(n).toLocaleString('sv'); }
 function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
-
+ 
 /* ---------- 4. GLOBE ENGINE ---------- */
 function createGlobe(host, onPlace){
   var G = { keep:0, raf:0, target:null, camZ:DEFZ, pts:{}, down:null, pinch:null, moved:false,
             guess:null, ans:null, locked:false, sunOn:true };
   var _sunPos = new THREE.Vector3(), _sunView = new THREE.Vector3();
-
+ 
   var ren = new THREE.WebGLRenderer({ antialias:true, alpha:true });
   ren.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAXDPR));
   var cv = ren.domElement; cv.style.opacity = 0; host.appendChild(cv);
-
+ 
   var sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(35, 1, 0.05, 50);
   cam.position.z = DEFZ;
-
+ 
   var sunLocal = vec(subsolar().lat, subsolar().lon);
   var sunU = { value: sunLocal.clone() }, nightU = { value: NIGHT };
   var mat = new THREE.MeshBasicMaterial({ color: 0xffffff });
@@ -265,35 +273,35 @@ function createGlobe(host, onPlace){
   sc.add(globe);
   sc.add(new THREE.Mesh(new THREE.SphereGeometry(1.05,48,32),
     new THREE.MeshBasicMaterial({ color:0x6fa8c8, transparent:true, opacity:.14, side:THREE.BackSide })));
-
+ 
   var mk = new THREE.Group(); globe.add(mk);
   var sun = new THREE.Sprite(new THREE.SpriteMaterial({ map:glowTex(), blending:THREE.AdditiveBlending, transparent:true, depthWrite:false }));
   sun.scale.set(SUNSIZE, SUNSIZE, 1); sc.add(sun);
-
+ 
   var unitSphere = new THREE.SphereGeometry(1,16,12), ray = new THREE.Raycaster();
-
+ 
   G.home = function(){
-
+ 
   // Initial view when the page loads: centred roughly on Europe
   var europe = { lat: 50, lon: 15 };
-
+ 
   globe.rotation.x = europe.lat * R;
   globe.rotation.y = -Math.PI/2 - europe.lon * R;
   globe.rotation.z = 0;
-
+ 
   G.camZ = DEFZ;
   cam.position.z = DEFZ;
   G.target = null;
 };
   G.home();
-
+ 
   // Between questions: a region game glides to its region; a global game stays where it is and just zooms out
   G.resetView = function(view){
     G.target = null;
     if(view){ G.target = rotationFor(view); G.camZ = view.z; }
     else G.camZ = DEFZ;
   };
-
+ 
   function frame(){
     G.raf = 0;
     var busy = G.keep > 0; if(busy) G.keep--;
@@ -306,38 +314,40 @@ function createGlobe(host, onPlace){
     }
     var dz = G.camZ - cam.position.z;
     if(Math.abs(dz) > .0005){ cam.position.z += dz*.15; busy = true; }
-
+ 
     var s = clamp((cam.position.z-1)/3.2, .08, 1)*MARKER, c = mk.children;
     for(var n=0; n<c.length; n++) if(c[n].isMesh) c[n].scale.setScalar(c[n].userData.size*s);
-
+ 
     _sunPos.copy(sunLocal).applyQuaternion(globe.quaternion).multiplyScalar(SUNDIST);
     sun.position.copy(_sunPos); cam.updateMatrixWorld();
     _sunView.copy(_sunPos).applyMatrix4(cam.matrixWorldInverse);
     var fade = _sunView.z < 0 ? 1 : 0;   // visible whenever it is in front of the camera; no fading near the screen edges
     if(!G.sunOn) fade = 0;
     sun.material.opacity = fade; sun.visible = fade > 0;
-
+ 
     ren.render(sc, cam);
     if(busy) G.raf = requestAnimationFrame(frame);
   }
   function kick(){ G.keep = 2; if(!G.raf) G.raf = requestAnimationFrame(frame); }
-
-  function loadTex(){
-    new THREE.TextureLoader().load(TEXTURE_SRC, function(t){
+ 
+  function loadTex(i){
+    i = i || 0; var list = textureList();
+    new THREE.TextureLoader().load(list[i], function(t){
       t.generateMipmaps = false; t.minFilter = THREE.LinearFilter;
       t.anisotropy = ren.capabilities.getMaxAnisotropy();
       mat.map = t; mat.needsUpdate = true;
       var max = ren.capabilities.maxTextureSize, im = t.image;
-      console.log('Globe texture: ' + im.width + 'x' + im.height + ', this device\'s max is ' + max + 'px' +
+      console.log('Globe texture ' + list[i] + ': ' + im.width + 'x' + im.height + ', this device\'s max is ' + max + 'px' +
         (im.width > max ? ' (it will be scaled down)' : ''));
       cv.style.transition = 'opacity .25s'; cv.style.opacity = 1; kick();
     }, undefined, function(){
+      if(i + 1 < list.length) return loadTex(i + 1);   // e.g. this month's file is missing: use the default texture
       mat.color.set(0x9fc3d6); cv.style.opacity = 1; kick();
       $('msg').textContent = 'Kunde inte ladda ' + fullUrl(TEXTURE_SRC) + ' (filen saknas, har fel namn eller kan inte öppnas av webbläsaren).';
     });
   }
   loadTex();
-
+ 
   function dot(lat, lon, col, size, opacity){
     var m = new THREE.Mesh(unitSphere, new THREE.MeshBasicMaterial({ color:col, transparent:opacity<1, opacity:opacity }));
     m.userData.size = size; m.scale.setScalar(size); m.position.copy(vec(lat, lon, 1)); mk.add(m);
@@ -362,7 +372,7 @@ function createGlobe(host, onPlace){
     if(G.guess) dot(G.guess.lat, G.guess.lon, COL_GUESS, .024, 1);
     kick();
   }
-
+ 
   // Show the answer and frame both pins
   G.reveal = function(ans){
     G.ans = ans; G.locked = true; marks();
@@ -376,13 +386,13 @@ function createGlobe(host, onPlace){
     G.target = rotationFor(centre.length() > .05 ? latlon(centre) : ans);
     G.camZ = Math.max(z, REVEALZ); kick();
   };
-
+ 
   // Sun on: night side is darkened and the sun glow is shown. Sun off: the whole globe is evenly lit.
   G.setSun = function(on){ G.sunOn = on; nightU.value = on ? NIGHT : 1; kick(); };
-
+ 
   // Clear pins for the next question
   G.next = function(view){ G.ans = null; G.guess = null; G.locked = false; G.resetView(view); marks(); };
-
+ 
   function pinchDist(){ var k = Object.keys(G.pts), a = G.pts[k[0]], b = G.pts[k[1]]; return Math.hypot(a.x-b.x, a.y-b.y); }
   function place(e){
     var r = cv.getBoundingClientRect();
@@ -418,7 +428,7 @@ function createGlobe(host, onPlace){
   cv.addEventListener('wheel', function(e){
     e.preventDefault(); G.camZ = clampZ(1 + (G.camZ-1)*(1 + e.deltaY*.001)); kick();
   }, { passive:false });
-
+ 
   function size(){
     var w = host.clientWidth, h = host.clientHeight;
     if(w && h){ ren.setSize(w, h, false); cam.aspect = w/h; cam.updateProjectionMatrix(); kick(); }
@@ -426,13 +436,13 @@ function createGlobe(host, onPlace){
   window.addEventListener('resize', size); size();
   return G;
 }
-
+ 
 /* ---------- 5. MENU & GAME ---------- */
 var G, order, idx, results, t0, timerId, currentMode, masteryBefore;
-
+ 
 function clock(ms){ var s = Math.floor(ms/1000); return Math.floor(s/60) + ':' + ('0' + (s%60)).slice(-2); }
 function tick(){ $('timer').textContent = clock(Date.now() - t0); }
-
+ 
 /* --- Sun on/off, saved in localStorage --- */
 var sunOn = (function(){ try{ return localStorage.getItem(SUN_KEY) !== '0'; }catch(e){ return true; } })();
 function renderSun(){
@@ -448,7 +458,7 @@ $('sunBtn').addEventListener('click', function(){
   renderSun();
   this.blur();   // so Space/Enter keeps meaning "check answer", not "toggle the sun"
 });
-
+ 
 /* --- Sounds --- */
 var soundOn = (function(){ try{ return localStorage.getItem(SOUND_KEY) !== '0'; }catch(e){ return true; } })();
 function renderSound(){
@@ -458,14 +468,14 @@ function renderSound(){
   b.title = t; b.setAttribute('aria-label', t);
 }
 var SOUNDS = {};
-['success', 'defeat', 'verycorrect', 'correct', 'wrong', 'verywrong'].forEach(function(n){
+['success', 'defeat', 'verycorrect', 'correct', 'wrong'].forEach(function(n){
   var a = new Audio(SOUND_DIR + n + '.ogg'); a.preload = 'auto'; SOUNDS[n] = a;
 });
 function play(n){
   var a = SOUNDS[n]; if(!a || !soundOn) return;
   try{ a.currentTime = 0; var p = a.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
 }
-
+ 
 renderSound();
 $('muteBtn').addEventListener('click', function(){
   soundOn = !soundOn;
@@ -474,7 +484,7 @@ $('muteBtn').addEventListener('click', function(){
   if(!soundOn) Object.keys(SOUNDS).forEach(function(n){ SOUNDS[n].pause(); });   // cut off anything still playing
   this.blur();
 });
-
+ 
 /* --- Difficulty level, saved in localStorage --- */
 var level = (function(){
   try{ var v = parseInt(localStorage.getItem(LEVEL_KEY), 10); if(v >= 0 && v < LEVELS.length) return v; }catch(e){}
@@ -487,7 +497,7 @@ function renderLevel(){
   $('levelName').textContent = LEVELS[level].name;
   $('levelDesc').textContent = LEVELS[level].desc;
 }
-
+ 
 /* --- Memory strength, saved in localStorage --- */
 var memory = (function(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }catch(e){ return {}; } })();
 function saveMemory(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(memory)); }catch(e){} }
@@ -501,6 +511,8 @@ function learn(c, km){
   saveMemory();
   stamp(Date.now());   // remember when the player last played
 }
+var seen = (function(){ try{ return JSON.parse(sessionStorage.getItem(SEEN_KEY)) || {}; }catch(e){ return {}; } })();
+function saveSeen(){ try{ sessionStorage.setItem(SEEN_KEY, JSON.stringify(seen)); }catch(e){} }
 function mastery(pool){
   return pool.reduce(function(sum, c){ return sum + strengthOf(c); }, 0) / pool.length;
 }
@@ -518,10 +530,16 @@ function applyFade(){
   stamp(last + days*864e5);    // move the clock on by the days just charged; the grace period keeps counting from the real last play
 }
 applyFade();
-
+ 
 // Draw n cities without replacement; weaker cities are more likely to be drawn
 function pickWeighted(pool, n){
-  var items = pool.map(function(c){ return { c:c, w: WEIGHT_FLOOR + 1 - strengthOf(c) }; }), out = [];
+  // Once every city in the pool has appeared, start a fresh deck
+  if(pool.every(function(c){ return seen[cityKey(c)]; })){
+    pool.forEach(function(c){ delete seen[cityKey(c)]; }); saveSeen();
+  }
+  var items = pool.map(function(c){
+    return { c:c, w: (WEIGHT_FLOOR + 1 - strengthOf(c)) * (seen[cityKey(c)] ? SEEN_FACTOR : 1) };
+  }), out = [];
   n = Math.min(n, items.length);
   while(out.length < n){
     var total = items.reduce(function(sum, x){ return sum + x.w; }, 0), r = Math.random()*total, i = 0;
@@ -530,10 +548,10 @@ function pickWeighted(pool, n){
   }
   return shuffle(out);
 }
-
+ 
 /* --- Menu: the list of game modes is built from the data in platser.js --- */
 function genitive(w){ return /s$/.test(w) ? w : w + 's'; }   // Europa -> Europas, Asien -> Asiens
-
+ 
 // Centre and zoom that frame a list of cities: average direction, zoom fitted to the spread (ignoring the ~10% most distant outliers)
 function viewFor(list){
   var sum = new THREE.Vector3();
@@ -544,7 +562,7 @@ function viewFor(list){
       th = ang[Math.floor(.9*(ang.length-1))], ll = latlon(ctr);
   return { lat: ll.lat, lon: ll.lon, z: Math.min(fitZ(th), DEFZ) };
 }
-
+ 
 function buildModes(){
   var all = CITIES.filter(inLevel), nAll = all.length;
   var modes = [{
@@ -575,7 +593,7 @@ function buildModes(){
   });
   return modes;
 }
-
+ 
 var MODES = [];
 function showMenu(){
   clearInterval(timerId);
@@ -586,7 +604,7 @@ function showMenu(){
   $('menu').classList.add('on');
   var first = $('modes').querySelector('button'); if(first) first.focus();
 }
-
+ 
 function renderMenu(){
   renderLevel();
   MODES = buildModes();
@@ -602,18 +620,18 @@ function renderMenu(){
   });
   $('modes').innerHTML = html;
 }
-
+ 
 $('level').addEventListener('input', function(){
   level = +this.value;
   try{ localStorage.setItem(LEVEL_KEY, String(level)); }catch(e){}
   renderMenu();   // only #modes is redrawn, so the slider keeps focus while dragging
 });
-
+ 
 $('modes').addEventListener('click', function(e){
   var b = e.target.closest('button.opt'); if(!b) return;
   startGame(MODES[+b.getAttribute('data-i')]);
 });
-
+ 
 /* --- Game --- */
 function show(i){
   var c = order[i];
@@ -622,7 +640,7 @@ function show(i){
   $('msg').textContent = 'Tryck på jordgloben för att sätta din nål.';
   $('btn').textContent = 'Kontrollera svar'; $('btn').disabled = true;
 }
-
+ 
 function startGame(mode){
   if(!mode.pool.length) return;
   currentMode = mode;
@@ -630,32 +648,30 @@ function startGame(mode){
   order = pickWeighted(mode.pool, mode.rounds);
   idx = 0;
   results = [];
-
+ 
   t0 = Date.now();
   tick();
   clearInterval(timerId);
   timerId = setInterval(tick, 500);
-
+ 
   $('menu').classList.remove('on');
   $('end').classList.remove('on');
   G.next(mode.view);
   show(0);
 }
-
+ 
 function check(){
   var c = order[idx], g = G.guess, d = hav(g.lat, g.lon, c.lat, c.lon), acc = accuracy(d), ok = d < CORRECT_KM;
   results.push({ name:c.stad, km:d, acc:acc, ok:ok });
   learn(c, d);
-  play(d <= VERYCORRECT_KM ? 'verycorrect'
-   : ok                  ? 'correct'
-   : d > VERYWRONG_KM    ? 'verywrong'
-   :                       'wrong');
+  if(ok){ seen[cityKey(c)] = 1; saveSeen(); }   // only a correct answer counts as "seen"; missed cities stay in the running
+  play(d <= VERYCORRECT_KM ? 'verycorrect' : ok ? 'correct' : 'wrong');
   G.reveal(c);
   $('msg').innerHTML = '<b>' + fmt(d) + ' km ifrån</b><br>' + (ok ? 'Rätt!' : 'Inte inom ' + CORRECT_KM + ' km') +
     '<br><span class="g">●</span> din gissning &nbsp; <span class="t">●</span> rätt plats';
   $('btn').textContent = idx === order.length-1 ? 'Visa resultat' : 'Nästa plats';
 }
-
+ 
 function finish(){
   clearInterval(timerId); tick();
   var right = results.filter(function(r){ return r.ok; }).length,
@@ -677,7 +693,7 @@ function finish(){
   }).join('');
   $('end').classList.add('on');
 }
-
+ 
 $('btn').addEventListener('click', function(){
   if(!G.locked){ if(G.guess) check(); }
   else if(idx < order.length-1){ idx++; G.next(currentMode.view); show(idx); }
@@ -685,7 +701,7 @@ $('btn').addEventListener('click', function(){
 });
 $('again').addEventListener('click', function(){ startGame(currentMode); });
 $('toMenu').addEventListener('click', function(){ G.next(); showMenu(); });
-
+ 
 // Space or Enter does the same as the main button (the end screen's button when it is open).
 // While the menu is open the keys are left alone, so Tab + Enter works on the menu buttons.
 document.addEventListener('keydown', function(e){
@@ -695,9 +711,9 @@ document.addEventListener('keydown', function(e){
   e.preventDefault();
   ($('end').classList.contains('on') ? $('again') : $('btn')).click();
 });
-
+ 
 function fail(title, detail){ $('city').textContent = title; $('msg').textContent = detail; }
-
+ 
 function boot(){
   if(!window.THREE) return fail('Three.js hittades inte', THREE_SRC + ' laddades men definierar inte THREE. Använd den klassiska versionen (t.ex. r128).');
   if(!CITIES.length) return fail('Fil saknas', 'Kunde inte läsa platser från platser.js. Kontrollera att filen ligger i samma mapp.');
@@ -712,7 +728,7 @@ function boot(){
     fail('Kunde inte starta', (e && e.message) ? e.message : String(e));
   }
 }
-
+ 
 (function loadThree(){
   if(window.THREE) return boot();
   var s = document.createElement('script');
@@ -724,3 +740,4 @@ function boot(){
 </script>
 </body>
 </html>
+ 
